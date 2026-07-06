@@ -114,6 +114,25 @@
   .ghint .ic{font-size:15px;color:#8fb4ff;flex:0 0 auto;margin-top:1px}
   .ghint b{color:#8fb4ff;cursor:pointer;white-space:nowrap;align-self:center;font-weight:600}
   .tapedit{font-size:10.5px;color:#5f7fb8;margin-left:6px;font-weight:500}
+  /* Safe Route transparency */
+  .legend{display:flex;gap:16px;font-size:11.5px;color:#a4a9b2;margin:2px 0 12px}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .legend i{width:16px;height:3px;border-radius:2px;display:inline-block}
+  .threat{display:flex;gap:11px;padding:12px 0;border-bottom:1px solid #15171d}
+  .threat:last-child{border-bottom:none}
+  .threat .ti{width:36px;height:36px;border-radius:10px;flex:0 0 36px;display:flex;align-items:center;justify-content:center;background:#1a160c;border:1px solid #3a2f12;color:#f0c067}
+  .threat.hi .ti{background:#2a0f0c;border-color:#5c1f18;color:#ff8078}
+  .threat .tn{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .threat .td{font-size:11.5px;color:#969aa3;margin-top:3px;line-height:1.4}
+  .threat .tw{font-size:11px;color:#8fb4ff;margin-top:5px;display:flex;align-items:flex-start;gap:5px;line-height:1.4}
+  .sevchip{font-size:9px;font-weight:800;padding:2px 6px;border-radius:5px;letter-spacing:.04em}
+  .sevchip.high{background:#2a0f0c;border:1px solid #5c1f18;color:#ff8a80}
+  .sevchip.med{background:#241803;border:1px solid #5c4310;color:#ffcf80}
+  .sr-det{margin-top:11px;border-top:1px solid #23262e;padding-top:11px}
+  .sr-det summary{cursor:pointer;font-size:12px;color:#9aa0a8;font-weight:600;list-style:none;display:flex;align-items:center;gap:7px}
+  .sr-det summary::-webkit-details-marker{display:none}
+  .sr-det .sr-d{font-size:11.5px;color:#a4a9b2;line-height:1.6;margin-top:9px}
+  .sr-det .sr-d b{color:#e7e9ee}
   .clock{display:flex;align-items:center;gap:7px;background:rgba(18,20,26,.85);backdrop-filter:blur(10px);border:1px solid #2a2d36;
     border-radius:999px;padding:7px 13px;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
   .clock .dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
@@ -350,6 +369,7 @@
   <symbol id="g-msg" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
   <symbol id="g-eye" viewBox="0 0 24 24"><path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3"/></symbol>
   <symbol id="g-chevR" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></symbol>
+  <symbol id="g-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v5M12 8h.01"/></symbol>
 </defs></svg>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -389,28 +409,51 @@ function mkIncident(inc){
   return L.marker(inc.ll,{icon:divIcon(html,'',sev==='high'?38:32),zIndexOffset:sev==='high'?1000:200}).addTo(S.map);
 }
 
+/* ---------- real street routing (OSRM, free, no key) ---------- */
+async function osrm(pts){
+  try{
+    const coords=pts.map(function(p){return p[1]+','+p[0];}).join(';');
+    const url='https://router.project-osrm.org/route/v1/driving/'+coords+'?overview=full&geometries=geojson';
+    const ctrl=new AbortController(); const to=setTimeout(function(){ctrl.abort();},4500);
+    const r=await fetch(url,{signal:ctrl.signal}); clearTimeout(to);
+    const j=await r.json();
+    if(j&&j.routes&&j.routes[0]) return j.routes[0].geometry.coordinates.map(function(c){return [c[1],c[0]];});
+  }catch(e){}
+  return null;
+}
+function resample(geom,n){
+  if(!geom||geom.length<=n) return geom||[];
+  const cum=[0]; for(let i=1;i<geom.length;i++)cum.push(cum[i-1]+haversine(geom[i-1],geom[i]));
+  const total=cum[cum.length-1]||1; const out=[];
+  for(let k=0;k<n;k++){ const target=total*k/(n-1); let i=1; while(i<cum.length&&cum[i]<target)i++;
+    if(i>=geom.length){out.push(geom[geom.length-1]);continue;}
+    const t=(target-cum[i-1])/((cum[i]-cum[i-1])||1); out.push(lerp(geom[i-1],geom[i],t)); }
+  return out;
+}
+
 /* ---------- scenario build ---------- */
-function buildScenario(){
-  // destination ~ 850m away (offset); route as a few control points to look street-ish
+async function buildScenario(){
   const s=S.start;
   S.dest=[s[0]+0.0072, s[1]+0.0026];
-  const ctrl=[ s,
-    [s[0]+0.0018, s[1]+0.0003],
-    [s[0]+0.0034, s[1]+0.0016],   // near here the incident will appear (ahead on path)
-    [s[0]+0.0055, s[1]+0.0020],
-    S.dest ];
-  S.route=densify(ctrl,14);
+  const via=[s[0]+0.0050, s[1]-0.0012];  // a side street, for the safer detour
+  const routes=await Promise.all([osrm([s,S.dest]), osrm([s,via,S.dest])]);
+  const directRaw=routes[0], saferRaw=routes[1];
+  const fbDirect=densify([s,[s[0]+0.003,s[1]+0.0006],[s[0]+0.0052,s[1]+0.0012],S.dest],12);
+  const fbSafer =densify([s,[s[0]+0.0018,s[1]+0.0003],[s[0]+0.0034,s[1]+0.0016],[s[0]+0.0055,s[1]+0.002],S.dest],14);
+  S.directGeom=resample(directRaw||fbDirect,46);
+  S.route=resample(saferRaw||directRaw||fbSafer,46);
   S.idx=0; S.pos=S.route[0];
   S.total=haversine(S.start,S.dest);
 
-  // ambient incidents (low/med), off the route
   S.incidents=[
     {ll:[s[0]+0.0010,s[1]-0.0022],sev:'low',type:'Traffic',icon:'car',cred:'reported',mins:22,conf:1},
     {ll:[s[0]+0.0048,s[1]+0.0052],sev:'med',type:'Fire / EMS activity',icon:'flame',cred:'confirmed',mins:14,conf:4},
     {ll:[s[0]-0.0016,s[1]+0.0030],sev:'low',type:'Noise complaint',icon:'users',cred:'reported',mins:31,conf:1},
   ];
-  // the scripted HIGH incident, ahead on the path (added when walk reaches ~38%)
-  S.scriptInc={ll:[s[0]+0.00355, s[1]+0.00135],sev:'high',type:'Police activity / disturbance',icon:'alert',cred:'confirmed',mins:2,conf:6, street:'44th Dr'};
+  // scripted HIGH incident placed ON the route ~55% along (slightly offset) so it's genuinely ahead
+  const ai=Math.min(S.route.length-1, Math.round(S.route.length*0.55));
+  const bp=S.route[ai]||S.dest;
+  S.scriptInc={ll:[bp[0]+0.00016, bp[1]+0.00016],sev:'high',type:'Police activity / disturbance',icon:'alert',cred:'confirmed',mins:2,conf:6, street:'the block ahead'};
 }
 
 function drawBase(){
@@ -435,8 +478,8 @@ function renderIdle(){
     <div class="panel">
       <div class="statusbar"><span class="sdot amber"></span><div><div class="st">1 active incident nearby</div><div class="ss">Within 1 mile · low activity</div></div></div>
       <div class="qrow">
-        <div class="quick" onclick="toast('Walk With Me — folded into Guardian')">${ic('shield',17)} Walk With Me</div>
-        <div class="quick" onclick="toast('Safe Route — folded into Guardian')">${ic('nav',17)} Safe Route</div>
+        <div class="quick" onclick="showPlan()">${ic('shield',17)} Walk With Me</div>
+        <div class="quick" onclick="showSafeRoute()">${ic('nav',17)} Safe Route</div>
         <div class="quick" onclick="openFilters()">${ic('sliders',17)} Filters</div>
       </div>
       ${hint('idlehint','New here? Guardian is already set up — just tap Start. You can change who it shares with or what it watches anytime (Filters, or on the next screen).')}
@@ -455,7 +498,7 @@ function showPlan(){
       <h2>Your Guardian plan ${'<span class=\"aibadge\" style=\"vertical-align:2px\">'+ic('spark',12)+' AI</span>'}</h2>
       <p class="lede">Walking to ${CFG.home||'home'} · 0.6 mi · ETA ~12 min.</p>
       ${hint('planhint','This is all pre-filled from your defaults — tap any row to change it. Nothing to set up first.')}
-      <div class="planline"><div class="pic">${ic('nav',16)}</div><div><div class="pt">Safer route chosen</div><div class="ps">Avoids higher-activity blocks — you'll see why en route</div></div><span class="tag">READY</span></div>
+      <div class="planline" onclick="showSafeRoute()" style="cursor:pointer"><div class="pic">${ic('nav',16)}</div><div><div class="pt">Safer route chosen<span class="tapedit">see what it avoids</span></div><div class="ps">Avoids 2 active incidents on your usual way</div></div><span class="tag">READY</span></div>
       <div class="planline" onclick="openFilters()" style="cursor:pointer"><div class="pic">${ic('spark',16)}</div><div><div class="pt">Monitoring ${nTypes} incident types<span class="tapedit">tap to edit</span></div><div class="ps">Interrupts you for ${thL}</div></div><span class="tag">LIVE</span></div>
       <div class="planline" onclick="openContacts()" style="cursor:pointer"><div class="pic">${ic('users',16)}</div><div><div class="pt">Sharing with ${names}<span class="tapedit">tap to edit</span></div><div class="ps">Live location + ETA${ciL}</div></div><span class="tag">ON</span></div>
       <div style="height:12px"></div>
@@ -559,8 +602,8 @@ function triggerIntervention(inc){
     <div class="hd"><span class="warn">${ic('alert',15)} Hazard ahead on your route</span><span class="aibadge">${ic('spark',12)} GUARDIAN AI</span></div>
     <h3>Police activity ${dist} m ahead</h3>
     <p>A disturbance was reported on <b>${inc.street}</b> ${inc.mins} min ago, confirmed by ${inc.conf} people. It's directly on your current path.</p>
-    <div class="why"><b>Why I'm telling you:</b> high-severity + confirmed + within ${dist} m ahead of you. I found a detour via Jackson Ave that adds ~3 min and keeps you a block clear. ${'<i>AI can be wrong — trust what you see; call 911 in an emergency.</i>'}</div>
-    <button class="btn btn-white" onclick="reroute()">${ic('nav',17)} Reroute — via Jackson Ave (+3 min)</button>
+    <div class="why"><b>Why I'm telling you:</b> high-severity + confirmed + within ${dist} m ahead of you. I found a detour on a nearby street that adds ~3 min and keeps you a block clear. ${'<i>AI can be wrong — trust what you see; call 911 in an emergency.</i>'}</div>
+    <button class="btn btn-white" onclick="reroute()">${ic('nav',17)} Reroute — safer street (+3 min)</button>
     <div style="height:8px"></div>
     <button class="btn btn-ghost" onclick="keepGoing()">Keep my route</button>`;
   document.getElementById('interv').classList.add('show');
@@ -570,15 +613,16 @@ function detourFrom(pos,dest,inc){
   const via=[inc.ll[0]-0.0016, inc.ll[1]+0.0026];
   return densify([pos,via,dest],14);
 }
-function reroute(){
+async function reroute(){
   document.getElementById('interv').classList.remove('show');
   S.rerouted=true;
-  const det=detourFrom(S.pos,S.dest,S.activeInc||S.scriptInc);
+  const inc=S.activeInc||S.scriptInc;
+  const via=[inc.ll[0]-0.0016, inc.ll[1]+0.0026]; // detour a block to the side of the incident
+  let det=await osrm([S.pos,via,S.dest]);
+  det=resample(det||detourFrom(S.pos,S.dest,inc),40);
   if(S.layers.detour)S.map.removeLayer(S.layers.detour);
   S.layers.detour=L.polyline(det,{color:'#30d158',weight:6,opacity:.95}).addTo(S.map);
-  // dim old route
   S.layers.route.setStyle({color:'#3a3f48',opacity:.5,dashArray:'2 8'});
-  // adopt detour as remaining route
   S.route=det; S.idx=0; S.pos=S.route[0];
   S.phase='active';
   toast('Rerouted — Guardian is watching the new path');
@@ -632,7 +676,7 @@ function onLiveIncident(row){
   const ai=Math.min(S.route.length-1, S.idx+12), base=S.route[ai];
   const inc={ll:[base[0]+0.0002, base[1]+0.0001], sev:(row.severity||'high'), icon:'alert',
     type:row.type||'Police activity', cred:row.credibility||'confirmed', mins:row.mins||1,
-    conf:row.confirmations||6, street:row.street||'44th Dr'};
+    conf:row.confirmations||6, street:row.street||'the block ahead'};
   triggerIntervention(inc);
 }
 
@@ -642,8 +686,8 @@ function toast(msg){const t=document.getElementById('toast');t.innerHTML=ic('che
   clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2600);}
 
 /* ---------- reset ---------- */
-function resetDemo(){
-  clearInterval(S.timer);
+async function resetDemo(){
+  clearInterval(S.timer); clearCmp();
   ['route','detour','me','home'].forEach(k=>{if(S.layers[k])S.map.removeLayer(S.layers[k]);S.layers[k]=null;});
   S.layers.inc.forEach(m=>S.map.removeLayer(m));S.layers.inc=[];
   document.getElementById('interv').classList.remove('show');
@@ -653,8 +697,54 @@ function resetDemo(){
   document.getElementById('clock').querySelector('.dot').style.background='var(--green)';
   S.simMin=21*60+58; S.phase='idle'; S.intervened=false; S.rerouted=false;
   document.getElementById('clockT').textContent=fmtClock(S.simMin);
-  buildScenario(); drawBase(); renderIdle();
+  await buildScenario(); drawBase(); renderIdle();
 }
+
+/* ===== Safe Route transparency ===== */
+function clearCmp(){ if(S.cmp){ if(S.cmp.direct)S.map.removeLayer(S.cmp.direct); (S.cmp.layers||[]).forEach(function(m){S.map.removeLayer(m);}); S.cmp=null; } }
+function srThreats(){
+  const g=(S.directGeom&&S.directGeom.length>2)?S.directGeom:[S.start,S.dest];
+  const a=g[Math.max(1,Math.round(g.length*0.40))]||S.start;
+  const b=g[Math.max(1,Math.round(g.length*0.68))]||S.dest;
+  return [
+    {ll:[a[0]+0.00012,a[1]+0.00012],sev:'high',icon:'alert',name:'Reported assault',recency:'8 min ago',conf:5,dist:'right on your fastest route',why:'Violent + confirmed by 5 people, directly on your direct path'},
+    {ll:[b[0]+0.00012,b[1]+0.00012],sev:'med',icon:'users',name:'Harassment reports',recency:'20 min ago',conf:3,dist:'right on your fastest route',why:'Matches "suspicious person / harassment" in your filters'}
+  ];
+}
+function showSafeRoute(){
+  S.phase='saferoute';
+  document.getElementById('hdrTitle').textContent='Safe Route';
+  const direct=(S.directGeom&&S.directGeom.length)?S.directGeom:densify([S.start,S.dest],20);
+  const threats=srThreats();
+  clearCmp(); S.cmp={layers:[]};
+  S.cmp.direct=L.polyline(direct,{color:'#ff453a',weight:5,opacity:.6,dashArray:'2 8'}).addTo(S.map);
+  threats.forEach(function(t){S.cmp.layers.push(mkIncident(t));});
+  if(S.layers.route) S.layers.route.setStyle({color:'#30d158',weight:6,opacity:.95});
+  try{ S.map.fitBounds(S.cmp.direct.getBounds().pad(0.35)); }catch(e){}
+  const vv=S.route[Math.round(S.route.length*0.5)]||S.start;
+  const gmaps='https://www.google.com/maps/dir/?api=1&origin='+S.start[0]+','+S.start[1]+'&destination='+S.dest[0]+','+S.dest[1]+'&waypoints='+vv[0]+','+vv[1]+'&travelmode=walking';
+  const rows=threats.map(function(t){return '<div class="threat '+(t.sev==='high'?'hi':'')+'">'+
+    '<div class="ti">'+ic(t.icon,17)+'</div><div style="flex:1">'+
+    '<div class="tn">'+t.name+' <span class="sevchip '+t.sev+'">'+t.sev.toUpperCase()+'</span></div>'+
+    '<div class="td">'+t.recency+' · '+t.conf+' confirmations · '+t.dist+'</div>'+
+    '<div class="tw">'+ic('spark',11)+' Avoided because: '+t.why+'</div></div></div>';}).join('');
+  document.getElementById('sheet').innerHTML=
+    '<div class="panel" style="max-height:64vh;overflow-y:auto">'+
+      '<div class="statusbar"><span class="sdot amber"></span><div><div class="st">Your usual route passes 2 active incidents</div><div class="ss">Guardian found a safer way tonight</div></div><span class="aibadge" style="margin-left:auto">'+ic('spark',12)+' AI</span></div>'+
+      '<div class="legend"><span><i style="background:#ff453a"></i> Usual · fastest</span><span><i style="background:#30d158"></i> Safer · +3 min</span></div>'+
+      rows+
+      '<div class="why" style="margin-top:12px"><b>Safer route on lower-risk streets.</b> Adds ~3 min, but stays at least a block from every incident above.</div>'+
+      '<details class="sr-det"><summary>'+ic('info',13)+' How this route was decided</summary>'+
+        '<div class="sr-d">Guardian compared your fastest route against 3 alternatives and scored each by <b>active incidents within 50 m</b>, weighted by <b>severity, credibility, and how recent</b> they are, then chose the lowest-risk route with an acceptable time cost.<br><br>It uses only <b>Citizen incident reports + your route</b> — no other personal data — and re-checks continuously as you walk. When you open directions it hands off to Google Maps with a <b>waypoint</b> on the safer street; Maps may still re-route on live traffic, so this isn\'t a guaranteed path. <b>AI can be wrong — trust what you see, and call 911 in an emergency.</b></div>'+
+      '</details>'+
+      '<button class="btn btn-blue" style="margin-top:14px" onclick="closeSafeRoute();startWalk()">'+ic('shield',17)+' Walk the safer route</button>'+
+      '<div style="height:8px"></div>'+
+      '<a class="btn btn-ghost" href="'+gmaps+'" target="_blank" rel="noopener" style="text-decoration:none">'+ic('nav',16)+' Open safer route in Google Maps</a>'+
+      '<div style="height:8px"></div>'+
+      '<button class="btn btn-ghost" onclick="closeSafeRoute()">Back</button>'+
+    '</div>';
+}
+function closeSafeRoute(){ clearCmp(); if(S.layers.route)S.layers.route.setStyle({color:'#2f6bff',weight:6,opacity:.95}); document.getElementById('hdrTitle').textContent='Guardian'; try{S.map.fitBounds(S.layers.route.getBounds().pad(0.35));}catch(e){} showPlan(); }
 
 /* ===== config / onboarding / filters / check-in / SOS ===== */
 function cfgDefaults(){return {onboarded:false,contacts:['Mom','Alex'],home:'67-83 223rd Pl',
@@ -780,11 +870,11 @@ function closeSOS(){document.getElementById('sosModal').classList.remove('show')
 function sendSOS(){closeSOS();toast('SOS sent — location shared with your contacts + 911');if(sb){try{sb.from('walk_sessions').update({status:'sos'}).eq('code',SESSION_CODE);}catch(e){}}}
 
 /* ---------- boot ---------- */
-function boot(center,fromReal){
+async function boot(center,fromReal){
   loadCfg();
   S.start=center;
   initMap(center);
-  buildScenario(); drawBase(); renderIdle();
+  await buildScenario(); drawBase(); renderIdle();
   if(!fromReal){
     const b=document.getElementById('banner');
     b.innerHTML=ic('pin',14)+' Using a demo location (New York). Allow location, or run over https/localhost, to center on you.';
