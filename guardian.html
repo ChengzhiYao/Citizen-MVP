@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Citizen Guardian — Live Demo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -11,12 +11,13 @@
   :root{
     --bg:#000;--surface:#0c0d11;--surface2:#14151b;--line:#1e2027;--line2:#2a2d35;
     --text:#f4f5f7;--muted:#969aa3;--blue:#2f6bff;--red:#ff453a;--green:#30d158;--amber:#e0a52a;--ai:#9b7bff;
+    --navh:calc(64px + env(safe-area-inset-bottom));
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;height:100%;background:#05060a;color:var(--text);
     font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;letter-spacing:-.01em;overflow:hidden}
   body{display:flex;align-items:center;justify-content:center}
-  #app{position:relative;width:100vw;height:100dvh;height:100vh;overflow:hidden;background:#000}
+  #app{position:relative;width:100vw;height:100vh;height:100dvh;overflow:hidden;background:#000}
   /* phone on mobile = full screen; on desktop = centered phone-width column, no bezel */
   @media(min-width:480px){
     #app{width:412px;height:100vh;border-left:1px solid #14161c;border-right:1px solid #14161c}
@@ -27,15 +28,15 @@
 
   /* Citizen top header */
   .topbar{position:absolute;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;justify-content:space-between;
-    padding:16px 16px 12px;background:linear-gradient(180deg,rgba(0,0,0,.82),rgba(0,0,0,0))}
+    padding:calc(14px + env(safe-area-inset-top)) 16px 12px;background:linear-gradient(180deg,rgba(0,0,0,.88),rgba(0,0,0,0))}
   .brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:19px;letter-spacing:-.02em}
   .brand .ic{font-size:18px}
   .hactions{display:flex;align-items:center;gap:8px}
   .iconbtn{width:34px;height:34px;border-radius:50%;background:rgba(22,24,31,.85);backdrop-filter:blur(8px);
     display:flex;align-items:center;justify-content:center;color:#cfd3da;border:none;cursor:pointer}
   /* Citizen bottom nav */
-  .cnav{position:absolute;left:0;right:0;bottom:0;height:64px;background:rgba(0,0,0,.92);backdrop-filter:blur(12px);
-    border-top:1px solid #16181d;display:flex;z-index:30}
+  .cnav{position:absolute;left:0;right:0;bottom:0;height:var(--navh);padding-bottom:env(safe-area-inset-bottom);
+    background:rgba(0,0,0,.92);backdrop-filter:blur(12px);border-top:1px solid #16181d;display:flex;z-index:30}
   .cnav button{flex:1;background:none;border:none;color:#5f636c;display:flex;flex-direction:column;align-items:center;
     justify-content:center;gap:3px;font-size:9px;font-weight:500;cursor:pointer;position:relative;font-family:inherit}
   .cnav button.active{color:#fff}
@@ -48,7 +49,7 @@
     display:flex;flex-direction:column;align-items:center;gap:5px;color:#dfe2e8;cursor:pointer;text-align:center}
   .quick .ic{font-size:17px;color:#9bb4ff}
   /* other-tab screens */
-  .scr{position:absolute;left:0;right:0;top:0;bottom:64px;z-index:25;background:#000;overflow-y:auto;display:none}
+  .scr{position:absolute;left:0;right:0;top:0;bottom:var(--navh);z-index:25;background:#000;overflow-y:auto;display:none}
   .scr.show{display:block}
   .scr .inner{padding:0 16px 24px}
   .scrhead{position:sticky;top:0;background:#000;z-index:2;padding:18px 16px 12px;font-size:22px;font-weight:700;letter-spacing:-.02em;display:flex;align-items:center;justify-content:space-between}
@@ -89,7 +90,7 @@
   .watchers .avs{display:flex;margin-right:6px}
 
   /* bottom sheet */
-  .sheet{position:absolute;left:0;right:0;bottom:64px;z-index:20;padding:14px 16px 14px;
+  .sheet{position:absolute;left:0;right:0;bottom:var(--navh);z-index:20;padding:14px 16px 14px;
     background:linear-gradient(180deg,rgba(0,0,0,0),rgba(8,9,12,.92) 22%);}
   .panel{background:rgba(12,13,17,.94);backdrop-filter:blur(16px);border:1px solid #23262e;border-radius:22px;padding:16px;
     box-shadow:0 20px 50px rgba(0,0,0,.5)}
@@ -126,7 +127,7 @@
   .mini .m .k{font-size:10.5px;color:var(--muted);margin-top:2px}
 
   /* AI intervention card */
-  .interv{position:absolute;left:16px;right:16px;bottom:74px;z-index:40;background:#100d1f;border:1px solid #372e6b;
+  .interv{position:absolute;left:16px;right:16px;bottom:calc(var(--navh) + 12px);z-index:40;background:#100d1f;border:1px solid #372e6b;
     border-radius:22px;padding:18px;box-shadow:0 24px 60px rgba(0,0,0,.6);display:none;animation:up .3s ease}
   .interv.show{display:block}
   @keyframes up{from{transform:translateY(30px);opacity:.3}to{transform:none;opacity:1}}
@@ -306,7 +307,15 @@
 </defs></svg>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+/* ---------- Supabase (live) ---------- */
+const SUPA_URL='https://foazjihpcfzrjdvnlpqg.supabase.co';
+const SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZvYXpqaWhwY2Z6cmpkdm5scHFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzNTMzOTYsImV4cCI6MjA5ODkyOTM5Nn0.DecB0rT9ueM3JevF-FVFjm1FOzw39KD1KcU9Q6Ksxjc';
+const LIVE=true, SESSION_CODE='DEMO';
+let sb=null;
+try{ if(LIVE && window.supabase && window.supabase.createClient){ sb=window.supabase.createClient(SUPA_URL,SUPA_ANON); } }catch(e){ console.warn('supabase init failed',e); }
+
 /* ---------- helpers ---------- */
 function ic(n,s){return '<svg class="ic" style="font-size:'+(s||16)+'px"><use href="#g-'+n+'"/></svg>'}
 function haversine(a,b){const R=6371000,dLat=(b[0]-a[0])*Math.PI/180,dLng=(b[1]-a[1])*Math.PI/180,
@@ -455,9 +464,13 @@ function tick(){
   S.layers.me.setLatLng(S.pos);
   S.map.panTo(S.pos,{animate:true,duration:.5});
   activeSheet();
-  // trigger scripted intervention at ~38% if not rerouted
+  // intervention: when LIVE, wait for an injected incident (safety-net at 72%); offline, auto-fire at 36%
   const pct=S.idx/(S.route.length-1);
-  if(!S.intervened && pct>=0.36){ triggerIntervention(); }
+  if(!S.intervened){
+    if(sb){ if(pct>=0.72) triggerIntervention(S.scriptInc); }
+    else if(pct>=0.36){ triggerIntervention(S.scriptInc); }
+  }
+  publishSession();
 }
 
 /* ---------- AI risk engine + intervention ---------- */
@@ -475,10 +488,9 @@ function riskScore(inc, pos, route, idx){
   const score=sevW*credW*proximity*(onPath?2.2:0.5);
   return {score,d:Math.round(d),ahead:Math.round(ahead),onPath};
 }
-function triggerIntervention(){
-  S.intervened=true;
-  // add the scripted high incident ahead on the path
-  const inc=S.scriptInc;
+function triggerIntervention(inc){
+  inc = inc || S.scriptInc;
+  S.intervened=true; S.activeInc=inc;
   S.layers.inc.push(mkIncident(inc));
   const r=riskScore(inc,S.pos,S.route,S.idx);
   // only intervene if the engine says it's high & on path
