@@ -54,12 +54,21 @@
 <script>
 const SUPA_URL='https://foazjihpcfzrjdvnlpqg.supabase.co';
 const SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZvYXpqaWhwY2Z6cmpkdm5scHFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzNTMzOTYsImV4cCI6MjA5ODkyOTM5Nn0.DecB0rT9ueM3JevF-FVFjm1FOzw39KD1KcU9Q6Ksxjc';
-const CODE='DEMO';
+const CODE=(new URLSearchParams(location.search).get('s')||'DEMO').toUpperCase();
 const sb=window.supabase.createClient(SUPA_URL,SUPA_ANON);
 
 let map=L.map('map',{zoomControl:false,attributionControl:false}).setView([40.7305,-73.7920],16);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:20}).addTo(map);
 let marker=null, last=null;
+
+// register this watcher so the walker sees them join
+(async function joinAsWatcher(){
+  try{
+    let nm=localStorage.getItem('watchName');
+    if(!nm){ nm=(window.prompt('Your name (so they know who\'s watching):','')||'Guest').slice(0,24); localStorage.setItem('watchName',nm); }
+    await sb.from('watchers').insert({code:CODE, name:nm});
+  }catch(e){}
+})();
 
 function render(s){
   if(!s || s.lat==null) return;

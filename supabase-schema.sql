@@ -41,3 +41,15 @@ create policy "demo write incidents" on incidents      for insert with check (tr
 create policy "demo read walks"      on walk_sessions   for select using (true);
 create policy "demo insert walks"    on walk_sessions   for insert with check (true);
 create policy "demo update walks"    on walk_sessions   for update using (true);
+
+-- 5) watchers: people who opened the share link and joined a walk
+create table if not exists watchers (
+  id uuid primary key default gen_random_uuid(),
+  code text not null,
+  name text default 'Guest',
+  joined_at timestamptz not null default now()
+);
+alter publication supabase_realtime add table watchers;
+alter table watchers enable row level security;
+create policy "demo read watchers"   on watchers for select using (true);
+create policy "demo insert watchers" on watchers for insert with check (true);
