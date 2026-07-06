@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Citizen — Concept Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#000; --surface:#0c0d11; --surface2:#14151b; --line:#1e2027; --line2:#2a2d35;
+    --text:#f4f5f7; --muted:#969aa3; --muted2:#5f636c;
+    --blue:#2f6bff; --red:#ff453a; --green:#30d158; --amber:#e0a52a; --ai:#9b7bff;
+    --r:16px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:#070709;color:var(--text);
+    font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;letter-spacing:-.01em}
+  .ic{width:1em;height:1em;display:inline-block;flex:0 0 auto;stroke:currentColor;fill:none;
+    stroke-width:1.85;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.14em}
+
+  .stage{min-height:100vh;display:flex;flex-direction:column;align-items:center;gap:18px;padding:30px 16px 70px}
+  .stage-head{text-align:center;max-width:760px}
+  .stage-head h1{font-size:22px;margin:0 0 8px;font-weight:700;letter-spacing:-.02em}
+  .stage-head p{color:#a4a9b2;font-size:13.5px;line-height:1.55;margin:0}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+  .tbtn{background:#101117;border:1px solid #23262e;color:#d4d7de;font-size:12.5px;font-weight:500;
+    padding:9px 15px;border-radius:999px;cursor:pointer;transition:.15s;display:flex;align-items:center;gap:7px}
+  .tbtn .ic{font-size:15px}
+  .tbtn:hover{background:#16181f;border-color:#34374060}
+  .tbtn.on{background:var(--blue);border-color:var(--blue);color:#fff}
+
+  /* phone */
+  .phone{width:384px;max-width:94vw;aspect-ratio:384/812;background:#000;border-radius:46px;
+    border:11px solid #15161b;box-shadow:0 40px 90px rgba(0,0,0,.65),inset 0 0 0 1px #000;
+    position:relative;overflow:hidden}
+  .notch{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:118px;height:30px;
+    background:#000;border-radius:18px;z-index:60}
+  .statusbar{position:absolute;top:0;left:0;right:0;height:46px;display:flex;align-items:center;
+    justify-content:space-between;padding:0 26px;font-size:13px;font-weight:600;z-index:55;pointer-events:none}
+  .statusbar .right{display:flex;gap:7px;align-items:center;font-size:12px}
+  .statusbar .ic{font-size:15px}
+
+  .screen{position:absolute;inset:0;display:none;flex-direction:column;animation:fade .26s ease}
+  .screen.active{display:flex}
+  @keyframes fade{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+
+  .body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:88px}
+  .body::-webkit-scrollbar{width:0}
+  .pad{padding:0 18px}
+
+  .topbar{height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;margin-top:46px}
+  .topbar .title{font-size:21px;font-weight:700;display:flex;align-items:center;gap:6px;letter-spacing:-.02em}
+  .iconbtn{width:38px;height:38px;border-radius:50%;background:#16181f;display:flex;align-items:center;
+    justify-content:center;font-size:18px;color:#cfd3da;border:none;cursor:pointer;transition:.15s}
+  .iconbtn:hover{background:#1d2views}
+  .iconbtn.bare{background:none}
+
+  /* map */
+  .map{position:absolute;inset:0;background:radial-gradient(125% 90% at 50% 38%,#10141c 0%,#0a0d13 58%,#07090d 100%)}
+  .map svg.bg{position:absolute;inset:0;width:100%;height:100%}
+  .geo-ring{position:absolute;top:45%;left:50%;width:320px;height:320px;transform:translate(-50%,-50%);
+    border-radius:50%;background:radial-gradient(circle,rgba(47,107,255,.09),rgba(47,107,255,0) 70%)}
+  .me{position:absolute;top:45%;left:50%;width:18px;height:18px;transform:translate(-50%,-50%);
+    background:var(--blue);border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 7px rgba(47,107,255,.22);z-index:5}
+  .marker{position:absolute;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    transform:translate(-50%,-50%);cursor:pointer;background:#16181f;border:1.5px solid var(--line2);
+    color:#e7e9ee;font-size:18px;z-index:6;box-shadow:0 6px 16px rgba(0,0,0,.5)}
+  .marker.amber{border-color:var(--amber);color:#f0c067}
+  .marker.red{border-color:var(--red);color:#ff7a72}
+  .marker.live{border-color:var(--red);color:#ff7a72}
+  .marker .tag{position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);background:var(--red);
+    color:#fff;font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:8px;letter-spacing:0}
+
+  .map-top{position:absolute;top:46px;left:0;right:0;display:flex;align-items:center;justify-content:space-between;
+    padding:8px 16px;z-index:20}
+  .pill-title{font-size:20px;font-weight:700;display:flex;gap:6px;align-items:center;letter-spacing:-.02em}
+  .pill-title .ic{font-size:18px}
+  .map-bottom{position:absolute;left:0;right:0;bottom:84px;z-index:20;padding:0 16px}
+  .quickrow{display:flex;gap:10px;justify-content:center;margin-bottom:14px}
+  .quick{background:rgba(18,20,26,.86);backdrop-filter:blur(10px);border:1px solid #2a2d36;border-radius:13px;
+    padding:10px 14px;font-size:12.5px;font-weight:500;display:flex;align-items:center;gap:8px;cursor:pointer;color:#e7e9ee}
+  .quick .ic{font-size:16px}
+  .quick.primary{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+  .statline{display:flex;align-items:flex-end;justify-content:space-between;padding:0 4px}
+  .stat .n{font-size:29px;font-weight:800;line-height:1;letter-spacing:-.03em}
+  .stat .n.red{color:var(--red);display:flex;align-items:center;gap:6px}
+  .stat .n.red .ic{font-size:22px}
+  .stat .l{font-size:11px;color:#9aa0a8;margin-top:5px}
+  .areastatus{display:flex;align-items:center;gap:12px;background:rgba(18,20,26,.9);backdrop-filter:blur(10px);
+    border:1px solid #2a2d36;border-radius:16px;padding:11px 12px 11px 15px;cursor:pointer}
+  .as-dot{width:11px;height:11px;border-radius:50%;flex:0 0 11px}
+  .as-dot.amber{background:var(--amber);box-shadow:0 0 0 4px rgba(224,165,42,.16)}
+  .as-dot.green{background:var(--green);box-shadow:0 0 0 4px rgba(48,209,88,.16)}
+  .as-dot.red{background:var(--red);box-shadow:0 0 0 4px rgba(255,69,58,.16)}
+  .as-t{font-size:14.5px;font-weight:700;letter-spacing:-.01em}
+  .as-s{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.35}
+  .explore{background:#fff;color:#000;border:none;border-radius:999px;padding:12px 18px;font-weight:700;font-size:14px;
+    display:flex;align-items:center;gap:6px;cursor:pointer;position:relative;letter-spacing:-.01em}
+  .explore .ic{font-size:16px}
+  .explore .dot{position:absolute;top:-2px;right:-2px;width:11px;height:11px;background:var(--red);border-radius:50%;border:2px solid #000}
+
+  /* bottom nav */
+  .nav{position:absolute;left:0;right:0;bottom:0;height:74px;background:rgba(0,0,0,.92);backdrop-filter:blur(12px);
+    border-top:1px solid #16181d;display:flex;z-index:45}
+  .nav button{flex:1;background:none;border:none;color:#62666f;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:5px;font-size:10.5px;font-weight:500;cursor:pointer;position:relative;padding-top:4px}
+  .nav button.active{color:#fff}
+  .nav .ic{font-size:22px}
+  .nav6 button{font-size:9.5px;gap:4px}
+  .nav6 .ic{font-size:20px}
+  .nav6 .badge{margin-left:5px;min-width:14px;height:14px;font-size:8.5px}
+  .nav .badge{position:absolute;top:6px;left:50%;margin-left:6px;background:var(--red);color:#fff;font-size:9px;
+    font-weight:700;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 4px;border:1.5px solid #000}
+
+  /* cards / lists */
+  .sec-label{font-size:11.5px;color:#7c818b;font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin:20px 0 9px;display:flex;align-items:center;gap:8px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:15px}
+  .card.grad{background:linear-gradient(150deg,#13151c,#0b0c11)}
+  .row{display:flex;align-items:center;gap:13px;padding:14px 0;border-bottom:1px solid #15171d}
+  .row:last-child{border-bottom:none}
+  .ravatar{width:40px;height:40px;border-radius:11px;background:#1a1c24;display:flex;align-items:center;justify-content:center;
+    font-size:18px;flex:0 0 40px;color:#c4c8d0}
+  .ravatar.round{border-radius:50%}
+  .rmain{flex:1;min-width:0}
+  .rmain .t{font-weight:600;font-size:14.5px;display:flex;align-items:center;gap:8px}
+  .rmain .s{color:var(--muted);font-size:12.5px;margin-top:3px;line-height:1.4}
+  .chev{color:#565a63;font-size:18px;display:flex}
+
+  .sw{width:46px;height:28px;border-radius:999px;background:#2b2e37;position:relative;cursor:pointer;transition:.2s;flex:0 0 46px}
+  .sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.4)}
+  .sw.on{background:var(--green)}
+  .sw.on::after{left:21px}
+
+  .alertcard{display:flex;gap:13px;padding:16px 0;border-bottom:1px solid #15171d}
+  .alertcard .thumb{width:54px;height:54px;border-radius:13px;background:#191b22;flex:0 0 54px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#aeb3bc}
+  .alertcard .when{color:#7c818b;font-size:11.5px;margin-bottom:4px;font-weight:500}
+  .alertcard h4{margin:0 0 5px;font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .alertcard p{margin:0;color:#a4a9b2;font-size:12.5px;line-height:1.45}
+  .meta{color:#6f747d;font-size:11.5px;margin-top:8px;display:flex;gap:13px;align-items:center}
+  .meta span{display:flex;align-items:center;gap:5px}
+  .meta .ic{font-size:13px}
+  .bluedot{width:7px;height:7px;border-radius:50%;background:var(--blue);display:inline-block;flex:0 0 7px}
+
+  .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:none;border-radius:14px;padding:15px;
+    font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;letter-spacing:-.01em}
+  .btn-blue{background:var(--blue);color:#fff}
+  .btn-ghost{background:#101117;color:#d4d7de;border:1px solid #2a2d35}
+  .btn-red{background:var(--red);color:#fff}
+
+  .modal{position:absolute;inset:0;z-index:80;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.6)}
+  .modal.active{display:flex;animation:fade .22s}
+  .sheet{background:#0d0e13;width:100%;border-radius:26px 26px 0 0;border-top:1px solid #23262e;padding:10px 20px 28px;max-height:90%;overflow-y:auto;animation:up .3s ease}
+  @keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+  .grab{width:38px;height:5px;border-radius:3px;background:#2d3038;margin:6px auto 16px}
+
+  .tag-row{display:flex;flex-wrap:wrap;gap:9px}
+  .ptag{background:#14151b;border:1px solid #2a2d35;border-radius:999px;padding:10px 14px;font-size:13px;font-weight:500;
+    display:flex;align-items:center;gap:8px;cursor:pointer;color:#dfe2e8}
+  .ptag .ic{font-size:16px}
+
+  .freechip{display:inline-flex;align-items:center;background:#0e2417;border:1px solid #1f5234;color:#5fe39a;
+    font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px;letter-spacing:.02em}
+  .lockchip{display:inline-flex;align-items:center;background:#191b22;border:1px solid #2a2d35;color:#9498a1;
+    font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px}
+  .slider{width:100%;accent-color:var(--green);margin:10px 0 2px}
+
+  /* AI transparency */
+  .aibadge{display:inline-flex;align-items:center;gap:6px;background:#15112a;border:1px solid #352a63;color:#bfb0ff;
+    font-size:10px;font-weight:700;padding:4px 9px;border-radius:999px;letter-spacing:.06em}
+  .aibadge .ic{font-size:12px}
+  .aisummary{background:linear-gradient(160deg,#13102408,#120f22);background-color:#100d1f;border:1px solid #2e2856;border-radius:15px;padding:15px;margin-bottom:14px}
+  .aisummary .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
+  .aisummary .ttl{font-size:11px;color:#b6a6ff;font-weight:700;text-transform:uppercase;letter-spacing:.07em;display:flex;align-items:center;gap:7px}
+  .aisummary .ttl .ic{font-size:14px}
+  .aisummary .lead{font-size:15px;font-weight:600;line-height:1.45;margin:0 0 10px}
+  .relevance{display:inline-flex;align-items:center;gap:8px;background:#0d2016;border:1px solid #1f5234;color:#7fe6a8;
+    font-size:12.5px;font-weight:600;border-radius:11px;padding:9px 12px}
+  .relevance .d{width:9px;height:9px;border-radius:50%;background:var(--green);flex:0 0 9px}
+  .disclose{margin-top:12px;border-top:1px solid #2a2550;padding-top:11px}
+  .disclose summary{cursor:pointer;font-size:11.5px;color:#9a8fd6;font-weight:600;list-style:none;display:flex;align-items:center;gap:7px}
+  .disclose summary::-webkit-details-marker{display:none}
+  .disclose summary .ic{font-size:14px}
+  .disclose[open] summary{margin-bottom:9px}
+  .disclose .d2{font-size:11.5px;color:#a7a0c9;line-height:1.6}
+  .disclose .d2 b{color:#d7d0f5}
+  .src{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+  .src span{background:#191430;border:1px solid #322a5e;border-radius:8px;padding:4px 9px;font-size:10.5px;color:#bdb2e6;display:flex;align-items:center;gap:5px}
+  .src .ic{font-size:12px}
+  .trust{display:flex;align-items:center;gap:9px;background:#0d2016;border:1px solid #1f5234;color:#7fe6a8;border-radius:11px;padding:10px 12px;font-size:12.5px;font-weight:600}
+  .trust .ic{font-size:16px}
+  .confirmrow{display:flex;gap:10px;margin-top:14px}
+  .confirmrow .btn{padding:13px;font-size:13.5px}
+
+  /* Go Live flow */
+  .glv-bg{position:absolute;inset:0;background:linear-gradient(180deg,#23262d,#3c373b 60%,#241f22);overflow:hidden}
+  .glv-cam{position:absolute;inset:0;background:radial-gradient(80% 50% at 50% 30%,rgba(255,255,255,.05),transparent)}
+  .howcard{background:rgba(12,13,17,.72);backdrop-filter:blur(14px);border:1px solid #2a2d36;border-radius:15px;padding:14px}
+  .howcard .h{font-size:11.5px;font-weight:700;color:#cfd3da;text-transform:uppercase;letter-spacing:.07em;display:flex;align-items:center;gap:7px;margin-bottom:11px}
+  .steps{display:flex;gap:8px}
+  .stepi{flex:1;text-align:center}
+  .stepi .num{width:24px;height:24px;border-radius:50%;background:var(--blue);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 6px}
+  .stepi .lab{font-size:11px;color:#c7cbd2;line-height:1.3}
+  .stepconn{flex:0 0 14px;height:1.5px;background:#34384200;align-self:flex-start;margin-top:11px;background:#3a3e48}
+  .recbtn{width:78px;height:78px;border-radius:50%;background:var(--red);margin:0 auto;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;box-shadow:0 0 0 6px rgba(255,69,58,.22);border:3px solid #fff3}
+  .recdot{width:11px;height:11px;border-radius:50%;background:var(--red);display:inline-block;animation:pulse 1.2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .timerpill{background:rgba(0,0,0,.55);border-radius:999px;padding:7px 14px;font-size:14px;font-weight:700;display:inline-flex;align-items:center;gap:8px;font-variant-numeric:tabular-nums}
+  .stopbtn{width:74px;height:74px;border-radius:18px;background:var(--red);margin:0 auto;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 0 0 6px rgba(255,69,58,.22)}
+  .stopbtn .sq{width:26px;height:26px;border-radius:6px;background:#fff}
+  .capt{width:100%;background:#101117;border:1px solid #2a2d35;border-radius:12px;padding:12px;color:#fff;font-family:inherit;font-size:14px;resize:none}
+  .capt::placeholder{color:#6f747d}
+  .infocard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:4px 15px}
+  .infocard .row .ic{color:#7fb0ff}
+  .pipe{display:flex;flex-direction:column;gap:0}
+  .pipe-step{display:flex;gap:13px;align-items:flex-start;padding:0 0 22px;position:relative}
+  .pipe-step:last-child{padding-bottom:0}
+  .pipe-step .dot{width:30px;height:30px;border-radius:50%;flex:0 0 30px;display:flex;align-items:center;justify-content:center;font-size:15px;z-index:2;background:#1a1c24;border:1.5px solid #2a2d35;color:#9498a1}
+  .pipe-step.done .dot{background:#0d2016;border-color:#1f5234;color:#5fe39a}
+  .pipe-step.active .dot{background:var(--blue);border-color:var(--blue);color:#fff}
+  .pipe-step::before{content:"";position:absolute;left:14.5px;top:30px;bottom:0;width:1.5px;background:#23262e}
+  .pipe-step:last-child::before{display:none}
+  .pipe-step .pt{font-size:14.5px;font-weight:600}
+  .pipe-step .ps{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.4}
+  .pipe-step.pending .pt{color:#6f747d}
+  .statuschip{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px;letter-spacing:.02em;display:inline-flex;align-items:center;gap:5px}
+  .statuschip.review{background:#241803;border:1px solid #5c4310;color:#ffcf80}
+  .statuschip.live{background:#0d2016;border:1px solid #1f5234;color:#5fe39a}
+  .statuschip.arch{background:#191b22;border:1px solid #2a2d35;color:#9498a1}
+
+  /* News filtering */
+  .seg{display:flex;background:#101117;border:1px solid #20232b;border-radius:12px;padding:4px;gap:4px;margin-bottom:14px}
+  .seg button{flex:1;background:none;border:none;color:#9498a1;font-family:inherit;font-size:13px;font-weight:600;
+    padding:9px 6px;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+  .seg button.on{background:#22252e;color:#fff}
+  .seg button .ic{font-size:13px}
+  .fchips{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin:0 -18px 4px;padding-left:18px;padding-right:18px;scrollbar-width:none}
+  .fchips::-webkit-scrollbar{display:none}
+  .fchip{flex:0 0 auto;background:#14151b;border:1px solid #2a2d35;border-radius:999px;padding:8px 14px;font-size:12.5px;
+    font-weight:500;color:#d4d7de;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap}
+  .fchip .ic{font-size:14px}
+  .fchip.on{background:#fff;color:#000;border-color:#fff}
+  .aifilter{display:flex;align-items:center;gap:11px;background:#100d1f;border:1px solid #2e2856;border-radius:13px;padding:12px 14px;margin:4px 0 6px}
+  .aifilter .ttl{font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;color:#cabfff}
+  .aifilter .ttl .ic{font-size:15px}
+  .aifilter .sub{font-size:11.5px;color:#9a92c2;margin-top:3px;line-height:1.4}
+  .whychip{display:inline-flex;align-items:center;gap:5px;background:#100d1f;border:1px solid #2e2856;color:#b6aae6;
+    font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:999px;margin-top:7px}
+  .whychip .ic{font-size:11px}
+  .catchip{display:inline-flex;align-items:center;gap:4px;background:#191b22;border:1px solid #2a2d35;color:#aeb3bc;
+    font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:6px}
+
+  /* Premium comparison */
+  .cmp-table{border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .cmp-head{display:grid;grid-template-columns:1fr 56px 64px;background:#101117;border-bottom:1px solid var(--line)}
+  .cmp-head div{padding:11px 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;text-align:center;color:#9498a1}
+  .cmp-head div:first-child{text-align:left}
+  .cmp-head .pcol{color:#9bb4ff}
+  .cmp-row{display:grid;grid-template-columns:1fr 56px 64px;border-bottom:1px solid #15171d;align-items:center}
+  .cmp-row:last-child{border-bottom:none}
+  .cmp-row .f{padding:12px;font-size:13px;font-weight:500}
+  .cmp-row .f small{display:block;color:var(--muted);font-size:11px;font-weight:400;margin-top:2px;line-height:1.3}
+  .cmp-row .c{text-align:center;font-size:12px;color:var(--muted);font-weight:600}
+  .cmp-row .c.pcol{background:#0c0e18}
+  .cmp-row .c .ic{font-size:16px}
+  .cmp-row .c .yes{color:#5fe39a}
+  .cmp-row .c .no{color:#4a4e57}
+  .price{display:flex;align-items:center;justify-content:space-between;background:#101117;border:1.5px solid #20232b;border-radius:14px;padding:14px 16px;margin-bottom:10px;cursor:pointer}
+  .price.sel{border-color:var(--blue);background:#0c0f1c}
+  .price .pl{font-size:16px;font-weight:700}
+  .price .pl small{display:block;color:var(--muted);font-size:12px;font-weight:400;margin-top:2px}
+  .price .pr{font-size:17px;font-weight:700;text-align:right}
+  .price .pr small{display:block;color:var(--muted);font-size:11px;font-weight:400}
+  .pbadge{position:absolute;margin-top:-26px;left:16px;background:var(--blue);color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:999px;letter-spacing:.03em}
+
+  /* AI deep filter */
+  .prio{font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:6px;letter-spacing:.05em;flex:0 0 auto}
+  .prio.high{background:#2a0f0c;border:1px solid #5c1f18;color:#ff8a80}
+  .prio.med{background:#241803;border:1px solid #5c4310;color:#ffcf80}
+  .funnel{background:linear-gradient(160deg,#161033,#100d1f);border:1px solid #322a5e;border-radius:16px;padding:16px}
+  .funnel .big{display:flex;align-items:center;gap:12px;justify-content:center;margin:4px 0 2px}
+  .funnel .big .raw{font-size:22px;font-weight:700;color:#8a86a8}
+  .funnel .big .arrow{color:#7f76c0}
+  .funnel .big .kept{font-size:34px;font-weight:800;color:#cbbcff;letter-spacing:-.02em}
+  .funnel .cap{text-align:center;font-size:12.5px;color:#a89fce;line-height:1.5;margin:6px 4px 0}
+  .verified{display:inline-flex;align-items:center;gap:4px;color:#5fe39a;font-size:11px;font-weight:600}
+  .verified .ic{font-size:12px}
+  .hidbar{display:flex;align-items:center;gap:11px;background:var(--surface);border:1px dashed #2f333c;border-radius:13px;padding:13px 14px}
+
+  /* record-from-alert (geo-gated) */
+  .recact{display:inline-flex;align-items:center;gap:6px;background:var(--red);color:#fff;border:none;border-radius:999px;
+    padding:8px 13px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:10px}
+  .recact .ic{font-size:14px}
+  .recact.off{background:#101117;color:#5f636c;border:1px solid #23262e;cursor:not-allowed}
+  .recact.off .ic{color:#5f636c}
+  .ingeo{display:inline-flex;align-items:center;gap:5px;color:#5fe39a;font-size:11px;font-weight:600;margin-top:10px}
+  .ingeo .ic{font-size:12px}
+
+  /* Safe Route */
+  .routefield{display:flex;align-items:center;gap:12px;background:#101117;border:1px solid #20232b;border-radius:12px;padding:13px 14px}
+  .routefield .dm{width:12px;height:12px;border-radius:50%;flex:0 0 12px}
+  .routefield input{background:none;border:none;color:#fff;font-family:inherit;font-size:14px;flex:1;outline:none;min-width:0}
+  .routefield input::placeholder{color:#6f747d}
+  .routeconn{height:18px;border-left:2px dotted #2a2d35;margin-left:21px}
+  .routeopt{border:1.5px solid #20232b;border-radius:14px;padding:14px;margin-bottom:11px;cursor:pointer;background:#0c0d11}
+  .routeopt.rec{border-color:#1f5234;background:#0b1611}
+  .routeopt .rt-top{display:flex;justify-content:space-between;align-items:center}
+  .routeopt .rt-name{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+  .routeopt .rt-time{font-size:15px;font-weight:700;text-align:right}
+  .routeopt .rt-time small{display:block;font-size:11px;color:var(--muted);font-weight:400}
+  .routeopt .rt-sub{font-size:12.5px;margin-top:8px;display:flex;align-items:center;gap:7px}
+  .rt-warn{color:#ffcf80;display:inline-flex;align-items:center;gap:5px}
+  .rt-safe{color:#5fe39a;display:inline-flex;align-items:center;gap:5px}
+  .rt-warn .ic,.rt-safe .ic{font-size:14px}
+  .disclaimer{display:flex;gap:10px;background:#1a1405;border:1px solid #4a3a10;border-radius:12px;padding:12px 13px;font-size:12px;color:#e8cf95;line-height:1.5;align-items:flex-start}
+  .disclaimer .ic{font-size:17px;flex:0 0 auto;margin-top:1px}
+  .gmaps{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;background:#fff;color:#1a1a1a;border:none;
+    border-radius:14px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;text-decoration:none;font-family:inherit}
+
+  .note{position:absolute;background:#fdf8e3;color:#1a1a1a;border-radius:13px;padding:11px 13px;font-size:11.5px;
+    line-height:1.45;width:210px;box-shadow:0 12px 30px rgba(0,0,0,.55);z-index:70;display:none}
+  body.notes .note{display:block}
+  .note::before{content:"DESIGN NOTE";display:block;font-weight:800;font-size:9.5px;color:#9a7600;margin-bottom:5px;letter-spacing:.08em}
+  .note b{color:#000}
+
+  /* before/after */
+  #compare{display:none;max-width:1000px;width:100%;margin:0 auto}
+  #compare.show{display:block}
+  .cmp{display:grid;grid-template-columns:1fr 1fr;gap:16px;background:#0b0c11;border:1px solid #1e2027;border-radius:18px;padding:20px;margin-bottom:16px}
+  .cmp h3{grid-column:1/-1;margin:0 0 4px;font-size:16px;font-weight:700;letter-spacing:-.01em}
+  .cmp .col{background:#070809;border:1px solid #1b1d24;border-radius:14px;padding:15px}
+  .cmp .lab{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:9px}
+  .cmp .before .lab{color:#ff6b62}
+  .cmp .after .lab{color:#54d18a}
+  .cmp ul{margin:0;padding-left:18px;color:#c0c5ce;font-size:13px;line-height:1.65}
+  .cmp .col p{margin:0 0 9px;color:#a4a9b2;font-size:13px;line-height:1.5}
+  @media(max-width:680px){.cmp{grid-template-columns:1fr}}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<!-- ICON SPRITE -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="i-nav" viewBox="0 0 24 24"><path d="M3 11l19-9-9 19-2-8-8-2z"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19"/><path d="M12 2.5a14 14 0 0 1 0 19 14 14 0 0 1 0-19z"/></symbol>
+  <symbol id="i-video" viewBox="0 0 24 24"><rect x="2" y="6" width="13" height="12" rx="2.5"/><path d="M15 10.5l6-3.5v10l-6-3.5"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7.5"/><path d="M21 21l-4.3-4.3"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 2.5 2.5 7 12 11.5 21.5 7 12 2.5z"/><path d="M2.5 16.5 12 21l9.5-4.5"/><path d="M2.5 11.8 12 16.3l9.5-4.5"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1.5 14h5M9.5 8h5M17.5 16h5"/></symbol>
+  <symbol id="i-chevL" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
+  <symbol id="i-chevR" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></symbol>
+  <symbol id="i-chevD" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 13a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.2A1.6 1.6 0 0 0 7 19.7l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.6 1.6 0 0 0 4.3 13H4a2 2 0 1 1 0-4h.2A1.6 1.6 0 0 0 5.4 6.3l-.1-.1A2 2 0 1 1 8.1 3.4l.1.1A1.6 1.6 0 0 0 11 4.3V4a2 2 0 1 1 4 0v.2a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.6 1.6 0 0 0 19.7 11H20a2 2 0 1 1 0 4h-.2a1.6 1.6 0 0 0-1.4.9z"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-msg" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M21 10c0 7-9 12.5-9 12.5S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M12 7v5l3.5 2"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 3.9 2 18a2 2 0 0 0 1.7 3h16.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></symbol>
+  <symbol id="i-cone" viewBox="0 0 24 24"><path d="M10.2 3h3.6l4.2 16H6L10.2 3z"/><path d="M8.7 9.5h6.6M7.5 14.5h9M3 19h18"/></symbol>
+  <symbol id="i-car" viewBox="0 0 24 24"><path d="M3 13.5l2-5.2A3 3 0 0 1 7.8 6.5h8.4a3 3 0 0 1 2.8 1.8l2 5.2"/><path d="M3 13.5h18v4a1 1 0 0 1-1 1h-1.5a1 1 0 0 1-1-1v-1H6.5v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M6.5 16h.01M17.5 16h.01"/></symbol>
+  <symbol id="i-flame" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.4-.5-2-1-3-1.1-2.1-.2-4 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.2.4-2.3 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></symbol>
+  <symbol id="i-train" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="13" rx="3"/><path d="M5 11h14"/><path d="M9 3v8M15 3v8"/><path d="M8 20l-2 2M16 20l2 2"/><path d="M8.5 16h.01M15.5 16h.01"/></symbol>
+  <symbol id="i-plane" viewBox="0 0 24 24"><path d="M17.8 19.2 16 11l3.5-3.5a2.1 2.1 0 0 0-3-3L13 8 4.8 6.2a1 1 0 0 0-.9 1.7L9 11l-2 3-3-1-1 1 3.5 2.5L11 21l1-1-1-3 3-2 2.5 3.5 1-1z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-checkc" viewBox="0 0 24 24"><path d="M22 11v1a10 10 0 1 1-5.9-9.1"/><path d="M22 4 12 14l-3-3"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22v-7"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.7 4.6L18.5 9l-4.8 1.4L12 15l-1.7-4.6L5.5 9l4.8-1.4L12 3z"/><path d="M19 13.5l.7 1.9 2 .6-2 .7-.7 1.8-.7-1.8-2-.7 2-.6.7-1.9z"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v5M12 8h.01"/></symbol>
+  <symbol id="i-arrUR" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></symbol>
+  <symbol id="i-paw" viewBox="0 0 24 24"><circle cx="5.5" cy="11" r="1.7"/><circle cx="9.5" cy="7.5" r="1.7"/><circle cx="14.5" cy="7.5" r="1.7"/><circle cx="18.5" cy="11" r="1.7"/><path d="M12 12c-2.8 0-4.5 2.3-4.5 4.5A2.5 2.5 0 0 0 10 19c.9 0 1.3-.4 2-.4s1.1.4 2 .4a2.5 2.5 0 0 0 2.5-2.5C16.5 14.3 14.8 12 12 12z"/></symbol>
+  <symbol id="i-house" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 9.5V20h14V9.5"/><path d="M9.5 20v-6h5v6"/></symbol>
+  <symbol id="i-radio" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8a6 6 0 0 1 0 8.4M7.8 16.2a6 6 0 0 1 0-8.4M19 4.9a10 10 0 0 1 0 14.2M5 19.1A10 10 0 0 1 5 4.9"/></symbol>
+  <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M2 8.5a16 16 0 0 1 20 0M5 12a11 11 0 0 1 14 0M8.5 15.5a6 6 0 0 1 7 0"/><path d="M12 19h.01"/></symbol>
+  <symbol id="i-bike" viewBox="0 0 24 24"><circle cx="6" cy="17.5" r="3.3"/><circle cx="18" cy="17.5" r="3.3"/><path d="M6 17.5l4-7.5h4.5"/><path d="M10 10l4 7.5M14.5 10h3l1.4 4"/><circle cx="14.5" cy="6.4" r=".9" fill="currentColor" stroke="none"/></symbol>
+</defs></svg>
+<script>function I(n,s){return '<svg class="ic" style="font-size:'+(s||16)+'px"><use href="#i-'+n+'"/></svg>'}</script>
+
+<div class="stage">
+  <div class="stage-head">
+    <h1>Citizen — Concept Prototype</h1>
+    <p>Same brand, modernized execution. Three flow upgrades — subscription becomes optional, alerts fully customizable, plus new safety-first features — and AI you can see. Tap around, or open <b>Design notes</b> / <b>Before · After</b>.</p>
+    <div class="toolbar">
+      <button class="tbtn" id="t-notes" onclick="toggleNotes()"><svg class="ic"><use href="#i-info"/></svg> Design notes</button>
+      <button class="tbtn" id="t-cmp" onclick="toggleCompare()"><svg class="ic"><use href="#i-layers"/></svg> Before · After</button>
+      <button class="tbtn" onclick="go('home');setNav('home')"><svg class="ic"><use href="#i-nav"/></svg> Reset to Home</button>
+    </div>
+  </div>
+
+  <!-- ===================== PHONE ===================== -->
+  <div class="phone" id="phone">
+    <div class="notch"></div>
+    <div class="statusbar">
+      <span>3:58</span>
+      <span class="right"><svg class="ic"><use href="#i-wifi"/></svg> 35%</span>
+    </div>
+
+    <!-- HOME -->
+    <section class="screen active" id="home">
+      <div class="map">
+        <svg class="bg" viewBox="0 0 384 812" preserveAspectRatio="xMidYMid slice">
+          <rect width="384" height="812" fill="#0a0d13"/>
+          <path d="M-20 120 Q150 60 404 180" stroke="#0a1622" stroke-width="64" fill="none" opacity=".85"/>
+          <ellipse cx="120" cy="430" rx="155" ry="120" fill="#0f2018" opacity=".65"/>
+          <ellipse cx="305" cy="560" rx="120" ry="150" fill="#0f2018" opacity=".55"/>
+          <g stroke="#2a2f38" stroke-width="6" fill="none" opacity=".9">
+            <path d="M-10 300 Q160 250 404 360"/><path d="M40 -10 Q120 300 60 822"/>
+            <path d="M300 -10 Q250 350 364 822"/><path d="M-10 620 Q200 560 404 660"/>
+          </g>
+          <g stroke="#1f242c" stroke-width="2" fill="none" opacity=".75">
+            <path d="M0 200 L384 240"/><path d="M0 380 L384 420"/><path d="M0 520 L384 500"/>
+            <path d="M120 0 L150 812"/><path d="M225 0 L245 812"/>
+          </g>
+        </svg>
+        <div class="geo-ring"></div>
+        <div class="marker amber" style="top:39%;left:24%"><svg class="ic" style="font-size:18px"><use href="#i-alert"/></svg></div>
+        <div class="marker red" style="top:45%;left:31%"><svg class="ic" style="font-size:18px"><use href="#i-cone"/></svg><span class="tag">9m</span></div>
+        <div class="marker" style="top:52%;left:15%"><svg class="ic" style="font-size:18px"><use href="#i-car"/></svg></div>
+        <div class="marker amber" style="top:58%;left:50%" onclick="go('incident')"><svg class="ic" style="font-size:18px"><use href="#i-alert"/></svg></div>
+        <div class="marker live" style="top:55%;left:82%"><svg class="ic" style="font-size:18px"><use href="#i-radio"/></svg></div>
+        <div class="me"></div>
+      </div>
+      <div class="map-top">
+        <div class="pill-title"><svg class="ic"><use href="#i-layers"/></svg> Incidents <svg class="ic" style="font-size:15px"><use href="#i-chevD"/></svg></div>
+        <div style="display:flex;gap:9px">
+          <button class="iconbtn"><svg class="ic" style="font-size:18px"><use href="#i-search"/></svg></button>
+          <button class="iconbtn" onclick="go('profile');setNav('profile')"><svg class="ic" style="font-size:18px"><use href="#i-user"/></svg></button>
+        </div>
+      </div>
+      <div class="map-bottom">
+        <div class="quickrow">
+          <div class="quick primary" onclick="go('walk')"><svg class="ic"><use href="#i-shield"/></svg> Walk With Me</div>
+          <div class="quick" onclick="go('route')"><svg class="ic"><use href="#i-nav"/></svg> Safe Route</div>
+          <div class="quick" onclick="go('prefs')"><svg class="ic"><use href="#i-sliders"/></svg> Filters</div>
+        </div>
+        <div class="areastatus" onclick="go('incident')">
+          <span class="as-dot amber"></span>
+          <div style="flex:1;min-width:0">
+            <div class="as-t">1 active incident nearby</div>
+            <div class="as-s">Within 1 mile · low activity</div>
+          </div>
+          <button class="explore" onclick="event.stopPropagation();go('incident')">Explore <svg class="ic"><use href="#i-arrUR"/></svg></button>
+        </div>
+      </div>
+      <div class="note" style="top:120px;left:18px">Kept the <b>map-first home</b> and layers control, modernized the chrome. The old footer showed two cryptic numbers — "🔥 01" (incidents) and "2090" (users nearby). I replaced them with <b>one plain-language area status</b> ("Mostly quiet near you · 1 active incident within 1 mile") and <b>dropped the vanity user count</b> — it's not actionable and the big number reads as noise on a calm-safety surface.</div>
+    </section>
+
+    <!-- WALK WITH ME -->
+    <section class="screen" id="walk">
+      <div class="topbar"><div class="title"><button class="iconbtn bare" onclick="go('home')"><svg class="ic"><use href="#i-chevL"/></svg></button> Walk With Me</div><span></span></div>
+      <div class="body pad">
+        <div class="aisummary" style="border-color:#24407a;background-color:#0d1424">
+          <div class="ttl" style="color:#8fb4ff"><svg class="ic"><use href="#i-shield"/></svg> Virtual escort</div>
+          <p style="font-size:13.5px;color:#cdd9f0;line-height:1.55;margin:9px 0 0">Share a live, moving map of your walk with people you trust. They see your location and ETA, and are alerted automatically if you stop moving or don't arrive.</p>
+        </div>
+        <div class="sec-label">Share with</div>
+        <div class="card" style="padding:2px 15px">
+          <div class="row"><div class="ravatar round"><svg class="ic" style="font-size:18px"><use href="#i-user"/></svg></div><div class="rmain"><div class="t">Mom</div><div class="s">Safety Network · always reachable</div></div><div class="sw on" onclick="tog(this)"></div></div>
+          <div class="row"><div class="ravatar round"><svg class="ic" style="font-size:18px"><use href="#i-user"/></svg></div><div class="rmain"><div class="t">Alex R.</div><div class="s">Friend</div></div><div class="sw on" onclick="tog(this)"></div></div>
+          <div class="row" style="cursor:pointer"><div class="ravatar round"><svg class="ic" style="font-size:17px"><use href="#i-plus"/></svg></div><div class="rmain"><div class="t">Add someone</div><div class="s">From contacts or Safety Network</div></div><div class="chev"><svg class="ic"><use href="#i-chevR"/></svg></div></div>
+        </div>
+        <div class="sec-label">Destination & ETA</div>
+        <div class="card">
+          <div class="row" style="border:none;padding:4px 0"><div class="ravatar"><svg class="ic" style="font-size:18px"><use href="#i-pin"/></svg></div><div class="rmain"><div class="t">Home — 67-83 223rd Pl</div><div class="s">Est. arrival 4:12 PM · 0.6 mi</div></div></div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+            <span class="freechip">Auto-alert if I stop 2 min</span><span class="freechip">Auto-alert if late</span>
+          </div>
+        </div>
+        <button class="btn btn-blue" style="margin-top:20px" onclick="go('walkactive')"><svg class="ic"><use href="#i-shield"/></svg> Start Walk With Me</button>
+        <p style="color:#6f747d;font-size:12px;text-align:center;margin-top:11px">Free for everyone. No subscription required.</p>
+      </div>
+      <div class="note" style="top:150px;left:-152px">New <b>core</b> feature (Safety / 同行守护). Citizen already has Safety Network + Location Sharing — this turns those static settings into an <b>active, in-the-moment</b> tool, the reason people actually open a safety app.</div>
+    </section>
+
+    <!-- WALK ACTIVE -->
+    <section class="screen" id="walkactive">
+      <div class="map">
+        <svg class="bg" viewBox="0 0 384 812" preserveAspectRatio="xMidYMid slice">
+          <rect width="384" height="812" fill="#0a0d13"/>
+          <ellipse cx="200" cy="430" rx="175" ry="150" fill="#0f2018" opacity=".55"/>
+          <path d="M70 700 Q150 500 210 360 T262 120" stroke="#2f6bff" stroke-width="6" fill="none" stroke-dasharray="1 11" stroke-linecap="round"/>
+        </svg>
+        <div class="me" style="top:62%;left:32%"></div>
+        <div class="marker" style="top:20%;left:66%;border-color:#2f6bff;color:#7da6ff"><svg class="ic" style="font-size:18px"><use href="#i-house"/></svg></div>
+      </div>
+      <div class="map-top"><div class="pill-title"><svg class="ic"><use href="#i-shield"/></svg> Walk active</div><button class="iconbtn" onclick="go('home')"><svg class="ic" style="font-size:17px"><use href="#i-x"/></svg></button></div>
+      <div class="map-bottom">
+        <div class="card grad">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+            <div><div class="t" style="font-weight:600">Sharing live with 2 people</div><div class="s" style="color:var(--muted);font-size:12.5px">Mom · Alex R. — they can see you now</div></div>
+            <span class="freechip">ETA 4:12</span>
+          </div>
+        </div>
+        <button class="btn btn-red" style="margin-top:11px" onclick="go('home')"><svg class="ic"><use href="#i-checkc"/></svg> I arrived safely — End</button>
+      </div>
+    </section>
+
+    <!-- SAFETY HUB -->
+    <section class="screen" id="safety">
+      <div class="topbar"><div class="title">Safety</div><button class="iconbtn" onclick="go('prefs')"><svg class="ic" style="font-size:18px"><use href="#i-gear"/></svg></button></div>
+      <div class="body pad">
+        <div class="card grad" style="display:flex;align-items:center;gap:13px">
+          <div style="width:42px;height:42px;border-radius:11px;background:#0d2016;border:1px solid #1f5234;display:flex;align-items:center;justify-content:center;color:#5fe39a;flex:0 0 42px"><svg class="ic" style="font-size:20px"><use href="#i-shield"/></svg></div>
+          <div style="flex:1"><div class="t" style="font-weight:600">You're covered</div><div class="s" style="color:var(--muted);font-size:12.5px;margin-top:2px">2 people in your Safety Network · alerts on for this area</div></div>
+        </div>
+
+        <div class="sec-label">Tools</div>
+        <div class="card" style="display:flex;gap:13px;align-items:center;cursor:pointer;margin-bottom:11px" onclick="go('walk')">
+          <div style="width:44px;height:44px;border-radius:12px;background:#0c0f1c;border:1px solid #24407a;display:flex;align-items:center;justify-content:center;color:#8fb4ff;flex:0 0 44px"><svg class="ic" style="font-size:21px"><use href="#i-shield"/></svg></div>
+          <div style="flex:1"><div class="t" style="font-weight:600">Walk With Me</div><div class="s" style="color:var(--muted);font-size:12.5px;margin-top:2px">Share a live escort + ETA with people you trust</div></div>
+          <div class="chev"><svg class="ic"><use href="#i-chevR"/></svg></div>
+        </div>
+        <div class="card" style="display:flex;gap:13px;align-items:center;cursor:pointer" onclick="go('route')">
+          <div style="width:44px;height:44px;border-radius:12px;background:#0c0f1c;border:1px solid #24407a;display:flex;align-items:center;justify-content:center;color:#8fb4ff;flex:0 0 44px"><svg class="ic" style="font-size:21px"><use href="#i-nav"/></svg></div>
+          <div style="flex:1"><div class="t" style="font-weight:600">Safe Route</div><div class="s" style="color:var(--muted);font-size:12.5px;margin-top:2px">Incident-aware directions that route around hazards</div></div>
+          <div class="chev"><svg class="ic"><use href="#i-chevR"/></svg></div>
+        </div>
+
+        <div class="sec-label">Your network</div>
+        <div class="card" style="padding:2px 15px">
+          <div class="row" onclick="go('walk')" style="cursor:pointer"><div class="ravatar"><svg class="ic" style="font-size:18px"><use href="#i-users"/></svg></div><div class="rmain"><div class="t">Safety Network <span class="freechip">2</span></div><div class="s">People who escort you & get your alerts</div></div><div class="chev"><svg class="ic"><use href="#i-chevR"/></svg></div></div>
+          <div class="row" style="cursor:pointer"><div class="ravatar"><svg class="ic" style="font-size:18px"><use href="#i-pin"/></svg></div><div class="rmain"><div class="t">Location Sharing</div><div class="s">With Friends & Safety Network</div></div><div class="chev"><svg class="ic"><use href="#i-chevR"/></svg></div></div>
+        </div>
+      </div>
+      <div class="note" style="top:120px;left:-152px"><b>IA decision.</b> The proactive safety tools were scattered (map quick-actions + buried in Profile). Promoting a <b>Safety hub to the bottom nav</b> makes them first-class — the clearest signal that Citizen is shifting from a reactive fear feed to a <b>proactive safety</b> product.</div>
+    </section>
+
+    <!-- SAFE ROUTE · planner -->
+    <section class="screen" id="route">
+      <div class="topbar"><div class="title"><button class="iconbtn bare" onclick="go('home')"><svg class="ic"><use href="#i-chevL"/></svg></button> Safe Route</div><span></span></div>
+      <div class="body pad">
+        <p style="color:#a4a9b2;font-size:13px;line-height:1.5;margin:6px 0 14px">Enter where you're going. Citizen scans active incidents along the way and suggests a safer path.</p>
+        <div class="routefield"><span class="dm" style="background:var(--blue)"></span><input value="Current location" /></div>
+        <div class="routeconn"></div>
+        <div class="routefield"><span class="dm" style="background:var(--red)"></span><input placeholder="Destination" value="Queens Center Mall" /></div>
+        <div class="sec-label">Travel mode</div>
+        <div class="seg">
+          <button onclick="segSel(this)"><svg class="ic"><use href="#i-user"/></svg> Walk</button>
+          <button onclick="segSel(this)"><svg class="ic"><use href="#i-bike"/></svg> Bike</button>
+          <button class="on" onclick="segSel(this)"><svg class="ic"><use href="#i-car"/></svg> Drive</button>
+        </div>
+        <button class="btn btn-blue" style="margin-top:18px" onclick="go('route-result')"><svg class="ic"><use href="#i-shield"/></svg> Check route for hazards</button>
+      </div>
+      <div class="note" style="top:150px;left:-152px">New <b>core</b> feature (your idea). Citizen's incident data is perfect for this — turn the map into a <b>routing input</b>: enter a destination, get a safety-aware path.</div>
+    </section>
+
+    <!-- SAFE ROUTE · result -->
+    <section class="screen" id="route-result">
+      <div style="position:relative;height:200px;flex:0 0 200px;background:#0a0d13;overflow:hidden">
+        <svg viewBox="0 0 384 200" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%">
+          <rect width="384" height="200" fill="#0a0d13"/>
+          <g stroke="#1f242c" stroke-width="2" fill="none"><path d="M0 60 H384"/><path d="M0 130 H384"/><path d="M130 0 V200"/><path d="M250 0 V200"/></g>
+          <path d="M40 165 L130 130 L130 60 L344 40" stroke="#ff5b50" stroke-width="5" fill="none" stroke-dasharray="2 9" stroke-linecap="round" opacity=".7"/>
+          <path d="M40 165 L130 130 L250 130 L250 60 L344 40" stroke="#2f6bff" stroke-width="6" fill="none" stroke-linecap="round"/>
+          <circle cx="40" cy="165" r="7" fill="#2f6bff" stroke="#fff" stroke-width="2.5"/>
+          <circle cx="344" cy="40" r="7" fill="#ff453a" stroke="#fff" stroke-width="2.5"/>
+        </svg>
+        <div class="marker amber" style="top:62px;left:130px"><svg class="ic" style="font-size:17px"><use href="#i-alert"/></svg></div>
+        <span style="position:absolute;top:88px;left:96px;background:rgba(0,0,0,.7);border-radius:6px;padding:2px 7px;font-size:10.5px;color:#ffcf80;font-weight:600">44th Dr</span>
+        <button class="iconbtn" style="position:absolute;top:14px;left:14px;background:rgba(0,0,0,.5)" onclick="go('route')"><svg class="ic"><use href="#i-chevL"/></svg></button>
+      </div>
+      <div class="body pad" style="padding-top:14px">
+        <div class="trust" style="background:#241803;border-color:#5c4310;color:#ffcf80;margin-bottom:14px"><svg class="ic"><use href="#i-alert"/></svg> 1 active incident on your fastest route — disturbance near 44th Dr</div>
+
+        <div class="aisummary" style="margin-bottom:14px">
+          <div class="top"><span class="ttl"><svg class="ic"><use href="#i-spark"/></svg> Citizen suggests</span><span class="aibadge"><svg class="ic"><use href="#i-spark"/></svg> AI</span></div>
+          <p class="lead" style="font-size:14.5px">Take <b>Jackson Ave</b> instead — it adds ~3 min but avoids the active incident on 44th Dr.</p>
+        </div>
+
+        <div class="sec-label">Choose a route</div>
+        <div class="routeopt rec" onclick="rSel(this)">
+          <div class="rt-top"><div class="rt-name"><svg class="ic" style="font-size:16px;color:#5fe39a"><use href="#i-shield"/></svg> Safer · via Jackson Ave <span class="freechip">RECOMMENDED</span></div><div class="rt-time">15 min<small>3.1 mi</small></div></div>
+          <div class="rt-sub"><span class="rt-safe"><svg class="ic"><use href="#i-checkc"/></svg> Avoids the active incident</span></div>
+        </div>
+        <div class="routeopt" onclick="rSel(this)">
+          <div class="rt-top"><div class="rt-name">Fastest · via 44th Dr</div><div class="rt-time">12 min<small>2.7 mi</small></div></div>
+          <div class="rt-sub"><span class="rt-warn"><svg class="ic"><use href="#i-alert"/></svg> Passes 1 active incident</span></div>
+        </div>
+
+        <a class="gmaps" href="https://www.google.com/maps/dir/?api=1&origin=Long+Island+City,NY&destination=Queens+Center+Mall&waypoints=Jackson+Ave,Long+Island+City,NY&travelmode=driving" target="_blank" rel="noopener" style="margin-top:6px"><svg class="ic" style="font-size:18px"><use href="#i-nav"/></svg> Open safer route in Google Maps</a>
+        <div class="disclaimer" style="margin-top:12px">
+          <svg class="ic"><use href="#i-info"/></svg>
+          <div>Citizen sends Jackson Ave to Google Maps as a <b>waypoint</b>. Maps may still re-route based on live traffic, so this isn't a guaranteed path — stay aware and trust what you see.</div>
+        </div>
+      </div>
+      <div class="note" style="top:260px;left:-152px">The honest handoff. CTA is "<b>Open safer route</b>," never "guaranteed safe." Passing a <b>waypoint</b> (not just a destination) nudges Maps onto the detour, and the disclaimer is upfront that Maps can re-route — credibility over overpromising.</div>
+    </section>
+
+    <!-- NEWS -->
+    <section class="screen" id="news">
+      <div class="topbar"><div class="title">News</div><button class="iconbtn" onclick="go('prefs')"><svg class="ic" style="font-size:18px"><use href="#i-sliders"/></svg></button></div>
+      <div class="body pad">
+        <div class="seg">
+          <button class="on" onclick="segSel(this)"><svg class="ic"><use href="#i-spark"/></svg> For you</button>
+          <button onclick="segSel(this)"><svg class="ic"><use href="#i-pin"/></svg> Nearby</button>
+          <button onclick="segSel(this)">All</button>
+        </div>
+        <div class="fchips">
+          <div class="fchip on" onclick="fSel(this)">All</div>
+          <div class="fchip" onclick="fSel(this)"><svg class="ic"><use href="#i-car"/></svg> Police</div>
+          <div class="fchip" onclick="fSel(this)"><svg class="ic"><use href="#i-flame"/></svg> Fire</div>
+          <div class="fchip" onclick="fSel(this)"><svg class="ic"><use href="#i-cone"/></svg> Traffic</div>
+          <div class="fchip" onclick="fSel(this)"><svg class="ic"><use href="#i-alert"/></svg> Health</div>
+          <div class="fchip" onclick="fSel(this)"><svg class="ic"><use href="#i-users"/></svg> Community</div>
+        </div>
+        <div class="aifilter" onclick="openPaywall()" style="cursor:pointer">
+          <div style="flex:1"><div class="ttl"><svg class="ic"><use href="#i-spark"/></svg> AI Smart Filter <span class="lockchip">PREMIUM</span></div><div class="sub">Auto-hides low-relevance citywide noise & vague reports, ranked by your location and routes. Manual filters above stay free — AI does the work for you on Premium.</div></div>
+          <button class="btn-blue" style="border:none;border-radius:999px;padding:9px 14px;font-weight:600;font-size:12.5px;color:#fff;cursor:pointer;flex:0 0 auto">Unlock</button>
+        </div>
+        <div class="sec-label">Top story</div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <div style="height:140px;background:linear-gradient(135deg,#1b2733,#121b24);display:flex;align-items:center;justify-content:center;color:#3f5061;position:relative"><svg class="ic" style="font-size:38px"><use href="#i-alert"/></svg><span class="catchip" style="position:absolute;top:10px;left:10px"><svg class="ic"><use href="#i-alert"/></svg> Health</span></div>
+          <div style="padding:15px">
+            <div class="meta" style="margin:0 0 7px"><span><svg class="ic"><use href="#i-radio"/></svg> Citizen</span><span><svg class="ic"><use href="#i-clock"/></svg> 6h</span></div>
+            <h4 style="margin:0 0 6px;font-size:17px;font-weight:700;line-height:1.3">Nara Organics Infant Formula Recalled Amid Botulism Outbreak</h4>
+            <p style="color:#a4a9b2;font-size:13px;margin:0;line-height:1.45">Recalled following reports of contamination across multiple states.</p>
+            <div class="meta"><span><svg class="ic"><use href="#i-eye"/></svg> 8,661</span><span><svg class="ic"><use href="#i-msg"/></svg> 26</span><span><svg class="ic"><use href="#i-share"/></svg> Share</span></div>
+          </div>
+        </div>
+        <div class="sec-label">Ranked for you <span class="aibadge"><svg class="ic"><use href="#i-spark"/></svg> AI</span></div>
+        <div class="alertcard"><div class="thumb"><svg class="ic" style="font-size:22px"><use href="#i-train"/></svg></div><div style="flex:1"><div class="when">1 hour · Elmhurst · 0.3 mi</div><h4><span class="catchip"><svg class="ic"><use href="#i-cone"/></svg> Traffic</span> Service change on the (E) line</h4><p>Delays expected through the evening rush.</p><div class="whychip"><svg class="ic"><use href="#i-spark"/></svg> Matches your saved commute route</div></div></div>
+        <div class="alertcard"><div class="thumb"><svg class="ic" style="font-size:22px"><use href="#i-car"/></svg></div><div style="flex:1"><div class="when">2 hours · Bayside · 0.6 mi</div><h4><span class="catchip"><svg class="ic"><use href="#i-car"/></svg> Police</span> Police activity near 223rd St</h4><p>Reports of a disturbance; officers on scene.</p><div class="whychip"><svg class="ic"><use href="#i-pin"/></svg> Within your 0.5 mi alert radius</div></div></div>
+      </div>
+      <div class="note" style="top:120px;left:-152px"><b>The fix you spotted</b> — plus a clean monetization line. <b>Manual filters</b> (segmented view + category chips) are <b>free</b>: never gate basic control. The <b>AI Smart Filter</b> that auto-hides citywide noise is <b>Premium</b> — AI doing the work for you is the paid value-add, not the basics. Every surfaced item still shows <i>why</i>.</div>
+    </section>
+
+    <!-- GO LIVE -->
+    <!-- GO LIVE · 1 entry -->
+    <section class="screen" id="golive">
+      <div class="glv-bg"><div class="glv-cam"></div></div>
+      <div class="body" style="position:relative;background:none">
+        <div class="topbar" style="margin-top:46px"><span style="background:rgba(0,0,0,.5);border-radius:999px;padding:7px 14px;font-size:13px;font-weight:600">$0</span><button class="iconbtn" onclick="go('home')"><svg class="ic" style="font-size:16px"><use href="#i-chevD"/></svg></button></div>
+        <div class="pad" style="margin-top:6px">
+          <div class="howcard">
+            <div class="h"><svg class="ic" style="font-size:14px"><use href="#i-info"/></svg> How Go Live works</div>
+            <div class="steps">
+              <div class="stepi"><div class="num">1</div><div class="lab">Record what<br>you see</div></div>
+              <div class="stepconn"></div>
+              <div class="stepi"><div class="num">2</div><div class="lab">We review<br>before public</div></div>
+              <div class="stepconn"></div>
+              <div class="stepi"><div class="num">3</div><div class="lab">Posts to map<br>& alerts nearby</div></div>
+            </div>
+            <p style="color:#9aa0a8;font-size:11.5px;line-height:1.5;margin:12px 0 0">Shared anonymously. Approx. location attached. Find every video you post under <b style="color:#cfd3da">Profile › Your broadcasts</b>.</p>
+          </div>
+          <div style="text-align:center;margin-top:26px">
+            <div style="font-size:28px;font-weight:800;letter-spacing:-.02em">What's happening?</div>
+            <div style="color:#e1e3e7;margin-top:8px;font-size:14px">Near 67-83 223rd Pl · 435 alerts today</div>
+          </div>
+          <div class="sec-label" style="color:#b6bbc4;justify-content:center;margin-top:20px">1 · Tag what you're reporting</div>
+          <div class="tag-row" style="justify-content:center">
+            <div class="ptag" onclick="pickCat(this)"><svg class="ic"><use href="#i-car"/></svg> Police</div><div class="ptag" onclick="pickCat(this)"><svg class="ic"><use href="#i-flame"/></svg> Fire</div>
+            <div class="ptag" onclick="pickCat(this)"><svg class="ic"><use href="#i-alert"/></svg> Fire / EMS</div><div class="ptag" onclick="pickCat(this)"><svg class="ic"><use href="#i-cone"/></svg> Traffic</div>
+            <div class="ptag" onclick="pickCat(this)"><svg class="ic"><use href="#i-paw"/></svg> Missing Pet</div><div class="ptag" onclick="pickCat(this)"><svg class="ic"><use href="#i-users"/></svg> Community</div>
+          </div>
+          <div style="text-align:center;margin-top:24px">
+            <div class="sec-label" style="color:#b6bbc4;justify-content:center;margin-bottom:12px">2 · Record — 15–60s works best</div>
+            <div class="recbtn" onclick="startRec()"><svg class="ic" style="font-size:30px"><use href="#i-video"/></svg></div>
+            <p style="color:#aeb3bc;font-size:12px;margin-top:12px">Tap to start. You choose when to stop — there's no minimum.</p>
+          </div>
+        </div>
+      </div>
+      <div class="note" style="top:150px;left:-152px"><b>The fix you spotted.</b> The real Go Live never explains the flow, length, or where the video goes. This adds an upfront <b>3-step model</b> + clear length guidance, so a first-time user knows what's about to happen before recording.</div>
+    </section>
+
+    <!-- GO LIVE · 2 recording -->
+    <section class="screen" id="glv-rec">
+      <div class="glv-bg" style="background:linear-gradient(180deg,#2a1f22,#3a2a2c)"><div class="glv-cam"></div></div>
+      <div style="position:relative;flex:1;display:flex;flex-direction:column;padding-bottom:88px">
+        <div class="topbar" style="margin-top:46px;justify-content:center">
+          <span class="timerpill"><span class="recdot"></span> REC <span id="recTime">0:00</span></span>
+        </div>
+        <div style="margin:auto 0;text-align:center;padding:0 30px">
+          <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(0,0,0,.45);border-radius:12px;padding:10px 14px;font-size:13px;color:#eceef1;line-height:1.4;text-align:left">
+            <svg class="ic" style="font-size:18px;color:#ffd591"><use href="#i-info"/></svg> Narrate what you see and keep the phone steady. Don't put yourself in danger.
+          </div>
+        </div>
+        <div style="text-align:center;padding-bottom:8px">
+          <div class="stopbtn" onclick="stopRec()"><div class="sq"></div></div>
+          <p style="color:#cfd2d6;font-size:12px;margin-top:11px">Tap to stop and review before posting.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- GO LIVE · 3 review -->
+    <section class="screen" id="glv-review">
+      <div class="topbar"><div class="title"><button class="iconbtn bare" onclick="go('golive');setNav('golive')"><svg class="ic"><use href="#i-chevL"/></svg></button> Review</div><span style="color:var(--muted);font-size:12.5px">Step 3 of 4</span></div>
+      <div class="body pad">
+        <div style="position:relative;height:170px;border-radius:14px;background:linear-gradient(160deg,#2a2d34,#15171d);display:flex;align-items:center;justify-content:center;color:#6f747d;margin-bottom:14px">
+          <svg class="ic" style="font-size:34px"><use href="#i-video"/></svg>
+          <span style="position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,.6);border-radius:7px;padding:3px 8px;font-size:12px;font-weight:600" id="revDur">0:23</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span class="ptag" style="cursor:default" id="revCat"><svg class="ic"><use href="#i-alert"/></svg> Fire / EMS</span><span style="color:var(--muted);font-size:12px">tap to change</span></div>
+        <textarea class="capt" rows="2" placeholder="Add a short caption (optional) — what's going on?"></textarea>
+        <div class="sec-label">What happens when you post</div>
+        <div class="infocard">
+          <div class="row"><svg class="ic" style="font-size:18px"><use href="#i-user"/></svg><div class="rmain"><div class="t" style="font-weight:500;font-size:14px">Posted anonymously</div><div class="s">Your name and handle are never shown.</div></div></div>
+          <div class="row"><svg class="ic" style="font-size:18px"><use href="#i-shield"/></svg><div class="rmain"><div class="t" style="font-weight:500;font-size:14px">Reviewed before it's public</div><div class="s">Citizen moderation checks it first — usually under 2 min.</div></div></div>
+          <div class="row"><svg class="ic" style="font-size:18px"><use href="#i-pin"/></svg><div class="rmain"><div class="t" style="font-weight:500;font-size:14px">Approx. location attached</div><div class="s">Shown to users within ~1 mi; may appear in News if widely viewed.</div></div></div>
+          <div class="row"><svg class="ic" style="font-size:18px"><use href="#i-x"/></svg><div class="rmain"><div class="t" style="font-weight:500;font-size:14px">You stay in control</div><div class="s">Delete anytime from Your broadcasts.</div></div></div>
+        </div>
+        <button class="btn btn-blue" style="margin:18px 0 6px" onclick="go('glv-upload');runUpload()"><svg class="ic"><use href="#i-share"/></svg> Post broadcast</button>
+      </div>
+      <div class="note" style="top:240px;left:-152px">Answers "<b>where does my video go?</b>" <i>before</i> posting — anonymity, moderation, audience, location, and how to delete, all stated plainly. No surprises.</div>
+    </section>
+
+    <!-- GO LIVE · 4 uploading -->
+    <section class="screen" id="glv-upload">
+      <div class="topbar"><div class="title">Posting…</div><span style="color:var(--muted);font-size:12.5px">Step 4 of 4</span></div>
+      <div class="body pad">
+        <div class="sec-label">Progress</div>
+        <div class="card">
+          <div class="pipe">
+            <div class="pipe-step done" id="ps1"><div class="dot"><svg class="ic" style="font-size:15px"><use href="#i-check"/></svg></div><div><div class="pt">Uploaded</div><div class="ps">Video sent securely · 0:23 · 8.4 MB</div></div></div>
+            <div class="pipe-step active" id="ps2"><div class="dot"><svg class="ic" style="font-size:14px"><use href="#i-shield"/></svg></div><div><div class="pt">Safety review <span id="ps2chip" class="statuschip review" style="margin-left:6px">IN REVIEW</span></div><div class="ps">A moderator confirms it's safe to publish. Usually under 2 minutes — you can close the app.</div></div></div>
+            <div class="pipe-step pending" id="ps3"><div class="dot"><svg class="ic" style="font-size:15px"><use href="#i-radio"/></svg></div><div><div class="pt">Published to map & alerts</div><div class="ps">Goes live near you and notifies nearby users.</div></div></div>
+          </div>
+        </div>
+        <p style="color:#7c818b;font-size:12px;line-height:1.5;margin:16px 2px 0">We'll send you a notification the moment it's published. You can track status anytime under Profile › Your broadcasts.</p>
+        <button class="btn btn-ghost" style="margin-top:18px" onclick="go('glv-done')">See where it went</button>
+      </div>
+    </section>
+
+    <!-- GO LIVE · done -->
+    <section class="screen" id="glv-done">
+      <div class="topbar"><div class="title">Posted</div><button class="iconbtn" onclick="go('home');setNav('home')"><svg class="ic" style="font-size:17px"><use href="#i-x"/></svg></button></div>
+      <div class="body pad">
+        <div style="text-align:center;margin:14px 0 6px">
+          <div style="width:64px;height:64px;border-radius:50%;background:#0d2016;border:1px solid #1f5234;color:#5fe39a;display:flex;align-items:center;justify-content:center;margin:0 auto"><svg class="ic" style="font-size:30px"><use href="#i-checkc"/></svg></div>
+          <h3 style="margin:14px 0 5px;font-size:20px;font-weight:700">Your broadcast is live</h3>
+          <p style="color:#a4a9b2;font-size:13.5px;line-height:1.5;margin:0 18px">Here's exactly where it went — no more guessing.</p>
+        </div>
+        <div class="card" style="padding:2px 15px;margin-top:14px">
+          <div class="row"><svg class="ic" style="font-size:18px;color:#7fb0ff"><use href="#i-layers"/></svg><div class="rmain"><div class="t" style="font-weight:500;font-size:14px">On the live map</div><div class="s">Visible to users within ~1 mi of the incident.</div></div></div>
+          <div class="row"><svg class="ic" style="font-size:18px;color:#7fb0ff"><use href="#i-bell"/></svg><div class="rmain"><div class="t" style="font-weight:500;font-size:14px">Attached to the incident thread</div><div class="s">Added to "Disturbance near Cunningham Park."</div></div></div>
+          <div class="row"><svg class="ic" style="font-size:18px;color:#7fb0ff"><use href="#i-user"/></svg><div class="rmain"><div class="t" style="font-weight:500;font-size:14px">Saved to Your broadcasts</div><div class="s">Track views & status, or delete it, anytime.</div></div></div>
+        </div>
+        <button class="btn btn-blue" style="margin:18px 0 9px" onclick="go('broadcasts')"><svg class="ic"><use href="#i-video"/></svg> View Your broadcasts</button>
+        <button class="btn btn-ghost" onclick="go('home');setNav('home')">Back to map</button>
+      </div>
+      <div class="note" style="top:120px;left:-152px">The missing confirmation. The real app drops you with <b>no idea where the video went</b>. This closes the loop: on the map, in the thread, and saved to a history you can find.</div>
+    </section>
+
+    <!-- YOUR BROADCASTS -->
+    <section class="screen" id="broadcasts">
+      <div class="topbar"><div class="title"><button class="iconbtn bare" onclick="go('profile');setNav('profile')"><svg class="ic"><use href="#i-chevL"/></svg></button> Your broadcasts</div><span></span></div>
+      <div class="body pad">
+        <p style="color:#7c818b;font-size:12.5px;line-height:1.5;margin:6px 0 4px">Every video you've posted, with its current status. This view doesn't exist in the app today.</p>
+        <div class="alertcard"><div class="thumb"><svg class="ic" style="font-size:22px"><use href="#i-alert"/></svg></div><div style="flex:1"><div class="when">Just now · Cunningham Park</div><h4 style="justify-content:space-between">Fire / EMS <span class="statuschip review"><span class="recdot" style="width:7px;height:7px"></span> IN REVIEW</span></h4><p>0:23 · Awaiting moderation, usually &lt;2 min.</p></div></div>
+        <div class="alertcard"><div class="thumb"><svg class="ic" style="font-size:22px"><use href="#i-cone"/></svg></div><div style="flex:1"><div class="when">Yesterday · Francis Lewis Blvd</div><h4 style="justify-content:space-between">Traffic <span class="statuschip live"><svg class="ic" style="font-size:11px"><use href="#i-radio"/></svg> LIVE</span></h4><p>0:41 · On the map now</p><div class="meta"><span><svg class="ic"><use href="#i-eye"/></svg> 312 views</span><span><svg class="ic"><use href="#i-msg"/></svg> 4</span></div></div></div>
+        <div class="alertcard"><div class="thumb"><svg class="ic" style="font-size:22px"><use href="#i-users"/></svg></div><div style="flex:1"><div class="when">Jun 24 · Queens Village</div><h4 style="justify-content:space-between">Community <span class="statuschip arch">ARCHIVED</span></h4><p>1:02 · Auto-archived after 48h</p><div class="meta"><span><svg class="ic"><use href="#i-eye"/></svg> 1,890 views</span></div></div></div>
+      </div>
+      <div class="note" style="top:120px;left:-152px">New surface (社区参与 / 透明度). A creator history with clear <b>status chips</b> — In review / Live / Archived — plus views. Closes the "where are my uploads?" gap entirely.</div>
+    </section>
+
+    <!-- ALERTS -->
+    <section class="screen" id="alerts">
+      <div class="topbar"><div class="title">Alerts</div><button class="iconbtn" onclick="go('prefs')"><svg class="ic" style="font-size:18px"><use href="#i-gear"/></svg></button></div>
+      <div class="body pad">
+        <div class="card grad" style="display:flex;gap:13px;align-items:center">
+          <div style="width:42px;height:42px;border-radius:11px;background:#1a1c24;display:flex;align-items:center;justify-content:center;color:#cfd3da;flex:0 0 42px"><svg class="ic" style="font-size:20px"><use href="#i-sliders"/></svg></div>
+          <div style="flex:1"><div class="t" style="font-weight:600;display:flex;align-items:center;gap:8px">Customize your alerts <span class="freechip">FREE</span></div><div class="s" style="color:var(--muted);font-size:12.5px;margin-top:3px">Pick exactly what you're notified about, and where.</div></div>
+          <button class="btn-blue" style="border:none;border-radius:11px;padding:10px 14px;font-weight:600;font-size:13px;cursor:pointer;color:#fff" onclick="go('prefs')">Set up</button>
+        </div>
+        <div class="card" style="margin-top:11px;display:flex;gap:13px;align-items:center;background:linear-gradient(150deg,#161033,#0c0d11);border-color:#2e2856;cursor:pointer" onclick="go('deepfilter')">
+          <div style="width:42px;height:42px;border-radius:11px;background:#100d1f;border:1px solid #322a5e;display:flex;align-items:center;justify-content:center;color:#bfb0ff;flex:0 0 42px"><svg class="ic" style="font-size:20px"><use href="#i-spark"/></svg></div>
+          <div style="flex:1"><div class="t" style="font-weight:600;display:flex;align-items:center;gap:8px">AI Deep Filter <span class="lockchip">PREMIUM</span></div><div class="s" style="color:var(--muted);font-size:12.5px;margin-top:3px">Let AI surface only the alerts that matter — noise & vague reports removed.</div></div>
+          <div class="chev"><svg class="ic"><use href="#i-chevR"/></svg></div>
+        </div>
+        <div class="sec-label">Recent</div>
+        <div class="alertcard"><div class="thumb"><svg class="ic" style="font-size:22px"><use href="#i-alert"/></svg></div><div style="flex:1"><div class="when">9 min</div><h4><span class="bluedot"></span>Disturbance near Cunningham Park</h4><p>Police on scene after reports of a disturbance by the park.</p><div class="meta"><span><svg class="ic"><use href="#i-pin"/></svg> 0.4 mi · you're here</span><span class="ingeo"><svg class="ic"><use href="#i-checkc"/></svg> In range</span></div><button class="recact" onclick="startRec()"><svg class="ic"><use href="#i-video"/></svg> Go Live from here</button></div></div>
+        <div class="alertcard"><div class="thumb"><svg class="ic" style="font-size:22px"><use href="#i-train"/></svg></div><div style="flex:1"><div class="when">1 hour</div><h4><span class="bluedot"></span>Man Stabbed on (E) Train</h4><p>Police mobilized for a suspect search after the victim was stabbed at Jackson Heights.</p><div class="meta"><span><svg class="ic"><use href="#i-pin"/></svg> 7.3 mi · Elmhurst</span><span><svg class="ic"><use href="#i-video"/></svg> 1 Video</span></div><button class="recact off" disabled><svg class="ic"><use href="#i-pin"/></svg> Too far — be within 0.5 mi to record</button></div></div>
+        <div class="alertcard"><div class="thumb"><svg class="ic" style="font-size:22px"><use href="#i-plane"/></svg></div><div style="flex:1"><div class="when">1 hour</div><h4><span class="bluedot"></span>Plane Struck Drone at JFK</h4><p>A JetBlue flight from Las Vegas collided with a drone at 3,000 ft while landing.</p><div class="meta"><span><svg class="ic"><use href="#i-pin"/></svg> JFK</span><span><svg class="ic"><use href="#i-msg"/></svg> 40</span></div><button class="recact off" disabled><svg class="ic"><use href="#i-pin"/></svg> Too far — be within 0.5 mi to record</button></div></div>
+      </div>
+      <div class="note" style="top:330px;left:-152px"><b>Your idea.</b> Each alert gets a <b>Go Live from here</b> button — but it's <b>geo-gated</b>: only tappable when you're inside the incident's radius (the nearby one is live; the far ones are disabled with the reason shown). Turns bystanders into verified on-scene sources and <b>blocks remote/fake footage</b> by design.</div>
+      <div class="note" style="top:80px;left:-152px"><b>Key change.</b> "Customize your alerts" was locked behind <b>Premium</b>. Notification control is the app's core promise — gating it taxes the exact safety feature people need. Now <b>free</b>; Premium keeps power-user extras.</div>
+    </section>
+
+    <!-- AI DEEP FILTER (Premium) -->
+    <section class="screen" id="deepfilter">
+      <div class="topbar"><div class="title"><button class="iconbtn bare" onclick="go('alerts');setNav('alerts')"><svg class="ic"><use href="#i-chevL"/></svg></button> AI Deep Filter</div><span class="lockchip">PREMIUM</span></div>
+      <div class="body pad">
+        <div class="funnel">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <span class="aibadge"><svg class="ic"><use href="#i-spark"/></svg> AI-CURATED</span>
+            <div class="sw on" onclick="tog(this)"></div>
+          </div>
+          <div class="big">
+            <span class="raw">47 alerts</span>
+            <span class="arrow"><svg class="ic" style="font-size:20px"><use href="#i-chevR"/></svg></span>
+            <span class="kept">6</span>
+          </div>
+          <p class="cap">Today AI scored every alert by <b style="color:#cbbcff">importance, credibility and relevance to you</b>, merged duplicates, and removed vague single-source noise — surfacing the <b style="color:#cbbcff">6 that matter</b>.</p>
+          <details class="disclose" style="margin-top:12px">
+            <summary><svg class="ic"><use href="#i-info"/></svg> How the filter decides — and what it set aside</summary>
+            <div class="d2">
+              <b>Kept</b> alerts that are high-credibility (multiple confirmations or official), within your radius/routes, or life-safety. <b>Set aside</b> 41: <b>18</b> unverified single-source reports, <b>12</b> duplicates merged into the originals, <b>11</b> outside your area or low-signal.<br><br>
+              <b>It can be wrong</b> and <b>nothing is deleted</b> — you can review everything below. AI never suppresses a life-safety alert, even a low-credibility one.
+              <div class="src"><span><svg class="ic"><use href="#i-checkc"/></svg> credibility</span><span><svg class="ic"><use href="#i-pin"/></svg> distance/route</span><span><svg class="ic"><use href="#i-alert"/></svg> severity</span></div>
+            </div>
+          </details>
+        </div>
+
+        <div class="sec-label">Tune the filter</div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:#a4a9b2"><span>Importance threshold</span><b style="color:#fff">Balanced</b></div>
+          <input class="slider" type="range" min="0" max="100" value="55">
+          <div style="display:flex;justify-content:space-between;font-size:10.5px;color:#6f747d;margin-top:-2px"><span>Critical only</span><span>Everything</span></div>
+        </div>
+        <div class="card" style="margin-top:11px;padding:2px 15px">
+          <div class="row"><div class="rmain"><div class="t">Hide unverified / single-source reports</div><div class="s">Until a second person or camera confirms.</div></div><div class="sw on" onclick="tog(this)"></div></div>
+          <div class="row"><div class="rmain"><div class="t">Merge duplicate reports</div><div class="s">One entry per real-world incident.</div></div><div class="sw on" onclick="tog(this)"></div></div>
+          <div class="row"><div class="rmain"><div class="t">Summarize before notifying</div><div class="s">Send the calm recap, not the raw firehose.</div></div><div class="sw on" onclick="tog(this)"></div></div>
+        </div>
+
+        <div class="sec-label">Passed the filter · 6</div>
+        <div class="alertcard"><div class="thumb"><svg class="ic" style="font-size:22px"><use href="#i-alert"/></svg></div><div style="flex:1"><div class="when" style="display:flex;gap:8px;align-items:center"><span class="prio high">HIGH</span> 9 min · 0.4 mi</div><h4 style="margin-top:5px">Disturbance near Cunningham Park</h4><p>AI: police on scene, crowd dispersing, no injuries reported.</p><div style="display:flex;gap:10px;align-items:center;margin-top:7px"><span class="verified"><svg class="ic"><use href="#i-checkc"/></svg> Confirmed by 12</span><span class="whychip"><svg class="ic"><use href="#i-pin"/></svg> within your radius</span></div></div></div>
+        <div class="alertcard"><div class="thumb"><svg class="ic" style="font-size:22px"><use href="#i-train"/></svg></div><div style="flex:1"><div class="when" style="display:flex;gap:8px;align-items:center"><span class="prio high">HIGH</span> 1 hr · 7.3 mi</div><h4 style="margin-top:5px">Man stabbed on (E) train</h4><p>AI: suspect search active at Jackson Heights; police mobilized.</p><div style="display:flex;gap:10px;align-items:center;margin-top:7px"><span class="verified"><svg class="ic"><use href="#i-checkc"/></svg> Official + 1 video</span><span class="whychip"><svg class="ic"><use href="#i-nav"/></svg> your commute line</span></div></div></div>
+        <div class="alertcard"><div class="thumb"><svg class="ic" style="font-size:22px"><use href="#i-cone"/></svg></div><div style="flex:1"><div class="when" style="display:flex;gap:8px;align-items:center"><span class="prio med">MEDIUM</span> 40 min · 0.6 mi</div><h4 style="margin-top:5px">Water main break, Bell Blvd</h4><p>AI: lane closures expected through evening; affects your route home.</p><div style="display:flex;gap:10px;align-items:center;margin-top:7px"><span class="whychip"><svg class="ic"><use href="#i-nav"/></svg> on your route home</span></div></div></div>
+
+        <div class="hidbar" style="margin-top:8px">
+          <svg class="ic" style="font-size:20px;color:#7c818b"><use href="#i-eye"/></svg>
+          <div style="flex:1;font-size:12.5px;color:#a4a9b2;line-height:1.45"><b style="color:#fff">41 alerts set aside.</b> Nothing deleted — unverified, duplicate or out-of-area reports are one tap away.</div>
+        </div>
+        <button class="btn btn-ghost" style="margin-top:11px" onclick="go('alerts');setNav('alerts')">Review everything AI hid</button>
+      </div>
+      <div class="note" style="top:240px;left:-152px"><b>Your Premium idea.</b> A feature people will <i>happily pay for</i> on a safety app — AI scores credibility + relevance, strips vague noise, and shows only what matters. Stays honest: it explains its reasoning, <b>never deletes</b> anything, and <b>never hides life-safety</b>. Premium earns its price by adding value, not by gating basics.</div>
+    </section>
+
+    <!-- PREFERENCES -->
+    <section class="screen" id="prefs">
+      <div class="topbar"><div class="title"><button class="iconbtn bare" onclick="go('alerts')"><svg class="ic"><use href="#i-chevL"/></svg></button> Alert filters</div><span class="freechip">FREE</span></div>
+      <div class="body pad">
+        <div class="sec-label">Notify me about</div>
+        <div class="card" style="padding:2px 15px">
+          <div class="row"><div class="ravatar"><svg class="ic" style="font-size:18px"><use href="#i-alert"/></svg></div><div class="rmain"><div class="t">Violent / weapons incidents</div></div><div class="sw on" onclick="tog(this)"></div></div>
+          <div class="row"><div class="ravatar"><svg class="ic" style="font-size:18px"><use href="#i-flame"/></svg></div><div class="rmain"><div class="t">Fire & EMS</div></div><div class="sw on" onclick="tog(this)"></div></div>
+          <div class="row"><div class="ravatar"><svg class="ic" style="font-size:18px"><use href="#i-cone"/></svg></div><div class="rmain"><div class="t">Traffic & road closures</div></div><div class="sw" onclick="tog(this)"></div></div>
+          <div class="row"><div class="ravatar"><svg class="ic" style="font-size:18px"><use href="#i-paw"/></svg></div><div class="rmain"><div class="t">Missing pets</div></div><div class="sw" onclick="tog(this)"></div></div>
+          <div class="row"><div class="ravatar"><svg class="ic" style="font-size:18px"><use href="#i-users"/></svg></div><div class="rmain"><div class="t">Community & non-urgent</div></div><div class="sw" onclick="tog(this)"></div></div>
+        </div>
+        <div class="sec-label">Distance</div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:#a4a9b2"><span>Alert radius</span><b style="color:#fff">0.5 mi</b></div>
+          <input class="slider" type="range" min="0" max="100" value="30">
+        </div>
+        <div class="sec-label">Quiet hours <span class="freechip">CALM MODE</span></div>
+        <div class="card" style="padding:2px 15px">
+          <div class="row"><div class="rmain"><div class="t">Mute non-critical 10 PM–7 AM</div><div class="s">Life-safety alerts still come through.</div></div><div class="sw on" onclick="tog(this)"></div></div>
+          <div class="row"><div class="rmain"><div class="t">Group repeated updates</div><div class="s">One thread per incident, not 6 pings.</div></div><div class="sw on" onclick="tog(this)"></div></div>
+        </div>
+        <div class="sec-label">AI features <span class="aibadge"><svg class="ic"><use href="#i-spark"/></svg> YOU'RE IN CONTROL</span></div>
+        <div class="card" style="padding:2px 15px">
+          <div class="row"><div class="rmain"><div class="t">AI Incident Summaries</div><div class="s">Calm, plain-language recap on each alert. Always labelled "AI-generated."</div></div><div class="sw on" onclick="tog(this)"></div></div>
+          <div class="row"><div class="rmain"><div class="t">AI relevance ranking</div><div class="s">Uses your distance & saved routes only. Never sold or shared.</div></div><div class="sw on" onclick="tog(this)"></div></div>
+        </div>
+        <p style="color:#7c818b;font-size:11.5px;line-height:1.55;margin:11px 2px 0">Citizen labels every place AI is used and what data it touched. AI never verifies facts or contacts authorities — that stays human. <span style="color:#9a8fd6;font-weight:600">Learn how Citizen uses AI ›</span></p>
+        <button class="btn btn-blue" style="margin:20px 0 6px" onclick="go('alerts')">Save filters</button>
+      </div>
+      <div class="note" style="top:80px;left:-152px">New <b>core</b> control (个性化 + 降噪). Granular type / distance / quiet-hours + <b>Calm mode</b> grouping directly answers the "Citizen makes me anxious" critique — a signal the user chose, not a firehose.</div>
+    </section>
+
+    <!-- PROFILE -->
+    <section class="screen" id="profile">
+      <div class="topbar"><div class="title">Profile</div><button class="iconbtn"><svg class="ic" style="font-size:18px"><use href="#i-gear"/></svg></button></div>
+      <div class="body pad">
+        <div style="text-align:center;margin:10px 0 16px">
+          <div style="width:82px;height:82px;border-radius:50%;background:linear-gradient(145deg,#2a2d35,#191b22);margin:0 auto;display:flex;align-items:center;justify-content:center;color:#9498a1"><svg class="ic" style="font-size:36px"><use href="#i-user"/></svg></div>
+          <div style="color:#a4a9b2;margin-top:10px;font-size:14px">baysideUser2362567007</div>
+        </div>
+        <div class="card grad" id="premiumCard" style="display:flex;gap:13px;align-items:center;cursor:pointer">
+          <div style="width:42px;height:42px;border-radius:11px;background:#1a1c24;display:flex;align-items:center;justify-content:center;color:#9bb4ff;flex:0 0 42px"><svg class="ic" style="font-size:19px"><use href="#i-radio"/></svg></div>
+          <div style="flex:1"><div class="t" style="font-weight:600;display:flex;align-items:center;gap:8px">Citizen Premium <span class="lockchip">OPTIONAL</span></div><div class="s" style="color:var(--muted);font-size:12.5px;margin-top:3px">Extra alert zones, deeper history & broadcast — core safety stays free.</div></div>
+          <div class="chev"><svg class="ic"><use href="#i-chevR"/></svg></div>
+        </div>
+        <div class="card" style="margin-top:14px;padding:2px 15px">
+          <div class="row" onclick="go('walk')" style="cursor:pointer"><div class="ravatar"><svg class="ic" style="font-size:18px"><use href="#i-shield"/></svg></div><div class="rmain"><div class="t">Safety Network <span class="freechip">2</span></div><div class="s">People who escort & get your alerts</div></div><div class="chev"><svg class="ic"><use href="#i-chevR"/></svg></div></div>
+          <div class="row" onclick="go('prefs')" style="cursor:pointer"><div class="ravatar"><svg class="ic" style="font-size:18px"><use href="#i-sliders"/></svg></div><div class="rmain"><div class="t">Alert filters</div><div class="s">What you're notified about</div></div><div class="chev"><svg class="ic"><use href="#i-chevR"/></svg></div></div>
+          <div class="row" onclick="go('broadcasts')" style="cursor:pointer"><div class="ravatar"><svg class="ic" style="font-size:18px"><use href="#i-video"/></svg></div><div class="rmain"><div class="t">Your broadcasts <span class="freechip">3</span></div><div class="s">Videos you've posted · status & views</div></div><div class="chev"><svg class="ic"><use href="#i-chevR"/></svg></div></div>
+          <div class="row" style="cursor:pointer"><div class="ravatar"><svg class="ic" style="font-size:18px"><use href="#i-pin"/></svg></div><div class="rmain"><div class="t">Location Sharing</div><div class="s">With Friends & Safety Network</div></div><div class="chev"><svg class="ic"><use href="#i-chevR"/></svg></div></div>
+        </div>
+      </div>
+      <div class="note" style="top:160px;left:-152px"><b>Key change.</b> "Upgrade to Premium" was a near-blocking wall (with a lock icon on Safety Network). Reframed as <b>Optional</b> — no FOMO, no locked safety. Trust first; conversion follows retention.</div>
+    </section>
+
+    <!-- INCIDENT -->
+    <section class="screen" id="incident">
+      <div class="topbar"><div class="title"><button class="iconbtn bare" onclick="go('home')"><svg class="ic"><use href="#i-chevL"/></svg></button> Incident</div><button class="iconbtn"><svg class="ic" style="font-size:17px"><use href="#i-share"/></svg></button></div>
+      <div class="body pad">
+        <div style="height:128px;border-radius:14px;background:#15171d;display:flex;align-items:center;justify-content:center;color:#f0c067;margin-bottom:14px"><svg class="ic" style="font-size:34px"><use href="#i-alert"/></svg></div>
+        <h4 style="margin:0 0 7px;font-size:18px;font-weight:700">Reported Disturbance near Cunningham Park</h4>
+        <div class="meta" style="margin-bottom:13px"><span><svg class="ic"><use href="#i-pin"/></svg> 0.4 mi</span><span><svg class="ic"><use href="#i-clock"/></svg> 9 min ago</span><span><svg class="ic"><use href="#i-eye"/></svg> 1,204</span></div>
+
+        <div class="trust" style="margin-bottom:14px"><svg class="ic"><use href="#i-checkc"/></svg> Confirmed by 12 people nearby · 2 live videos</div>
+
+        <div class="aisummary">
+          <div class="top">
+            <span class="ttl"><svg class="ic"><use href="#i-spark"/></svg> AI Incident Summary</span>
+            <span class="aibadge"><svg class="ic"><use href="#i-spark"/></svg> AI-GENERATED</span>
+          </div>
+          <p class="lead">A loud argument outside the park drew police; no injuries reported and the crowd is dispersing.</p>
+          <div class="relevance"><span class="d"></span> Low relevance to you — you're 0.4 mi away, off the affected block</div>
+          <p style="font-size:12.5px;color:#b6aee0;line-height:1.5;margin:10px 0 0">Your route home is clear; no road closures. We'll only notify you again if it escalates toward you.</p>
+          <details class="disclose">
+            <summary><svg class="ic"><use href="#i-info"/></svg> How this summary was made</summary>
+            <div class="d2">
+              <b>What the AI did:</b> condensed 12 community reports + 2 live video transcripts into the summary above, and rated relevance using only your <b>distance and saved routes</b>. It did <b>not</b> verify facts, identify anyone, or contact authorities.<br><br>
+              <b>It can be wrong.</b> Always trust what you see in person and call 911 in an emergency.
+              <div class="src"><span><svg class="ic"><use href="#i-doc"/></svg> 12 reports</span><span><svg class="ic"><use href="#i-video"/></svg> 2 videos</span><span><svg class="ic"><use href="#i-pin"/></svg> your distance</span><span><svg class="ic"><use href="#i-nav"/></svg> saved route</span></div>
+            </div>
+          </details>
+        </div>
+
+        <div class="sec-label">Is this still happening?</div>
+        <div class="confirmrow">
+          <button class="btn btn-ghost" onclick="confirmInc(this,'Confirmed')"><svg class="ic"><use href="#i-checkc"/></svg> Still active</button>
+          <button class="btn btn-ghost" onclick="confirmInc(this,'Marked resolved')"><svg class="ic"><use href="#i-flag"/></svg> Resolved</button>
+        </div>
+        <p style="color:#6f747d;font-size:12px;margin-top:13px;text-align:center;line-height:1.5">Community confirmations build each reporter's trust score and auto-expire stale alerts.</p>
+      </div>
+      <div class="note" style="top:300px;left:-152px">New <b>core</b> layer (社区参与 / 可信度 + AI). The <b>AI Incident Summary</b> answers "is this about me?" in one glance; every AI element is <b>labelled</b> with what it did, its sources and a "can be wrong" caveat — non-negotiable for a safety app.</div>
+    </section>
+
+    <!-- BOTTOM NAV -->
+    <nav class="nav nav6">
+      <button data-nav="home" class="active" onclick="go('home');setNav('home')"><svg class="ic"><use href="#i-nav"/></svg>Home</button>
+      <button data-nav="news" onclick="go('news');setNav('news')"><svg class="ic"><use href="#i-globe"/></svg><span class="badge">4</span>News</button>
+      <button data-nav="golive" onclick="go('golive');setNav('golive')"><svg class="ic"><use href="#i-video"/></svg>Go Live</button>
+      <button data-nav="safety" onclick="go('safety');setNav('safety')"><svg class="ic"><use href="#i-shield"/></svg>Safety</button>
+      <button data-nav="alerts" onclick="go('alerts');setNav('alerts')"><svg class="ic"><use href="#i-bell"/></svg><span class="badge">5</span>Alerts</button>
+      <button data-nav="profile" onclick="go('profile');setNav('profile')"><svg class="ic"><use href="#i-user"/></svg>Profile</button>
+    </nav>
+
+    <!-- PAYWALL -->
+    <div class="modal" id="paywall">
+      <div class="sheet">
+        <div class="grab"></div>
+        <div style="text-align:center;padding:2px 4px 4px">
+          <div style="width:52px;height:52px;border-radius:15px;background:#0c0f1c;border:1px solid #24407a;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;color:#9bb4ff"><svg class="ic" style="font-size:25px"><use href="#i-radio"/></svg></div>
+          <h3 style="margin:0 0 5px;font-size:21px;font-weight:700">Citizen Premium</h3>
+          <p style="color:#a4a9b2;font-size:13.5px;margin:0 0 16px;line-height:1.5">Here's exactly what changes when you upgrade — and what's always free.</p>
+        </div>
+
+        <div class="cmp-table">
+          <div class="cmp-head"><div>Feature</div><div>Free</div><div class="pcol">Premium</div></div>
+          <div class="cmp-row"><div class="f">Live safety map & alerts</div><div class="c"><svg class="ic"><use href="#i-check"/></svg></div><div class="c pcol"><svg class="ic yes"><use href="#i-check"/></svg></div></div>
+          <div class="cmp-row"><div class="f">Alert filters, Calm mode & Walk With Me<small>Core safety — free for everyone</small></div><div class="c"><svg class="ic"><use href="#i-check"/></svg></div><div class="c pcol"><svg class="ic yes"><use href="#i-check"/></svg></div></div>
+          <div class="cmp-row"><div class="f">Police & fire radio audio<small>Full scanner clips on select incidents</small></div><div class="c"><span class="no">—</span></div><div class="c pcol"><svg class="ic yes"><use href="#i-check"/></svg></div></div>
+          <div class="cmp-row"><div class="f">Custom alert zones<small>Watch home, work, a relative's block</small></div><div class="c">1</div><div class="c pcol" style="color:#9bb4ff;font-weight:700">5</div></div>
+          <div class="cmp-row"><div class="f">Incident history & video replays</div><div class="c">24h</div><div class="c pcol" style="color:#9bb4ff;font-weight:700">Full</div></div>
+          <div class="cmp-row"><div class="f">AI Deep Filter<small>Scores credibility & relevance, removes noise</small></div><div class="c"><span class="no">—</span></div><div class="c pcol"><svg class="ic yes"><use href="#i-check"/></svg></div></div>
+        </div>
+
+        <div class="sec-label">Choose a plan</div>
+        <span class="pbadge">SAVE 44% · MOST POPULAR</span>
+        <div class="price sel" onclick="selPlan(this)"><div class="pl">Yearly<small>$39.99 billed once a year</small></div><div class="pr">$3.33<small>/month</small></div></div>
+        <div class="price" onclick="selPlan(this)"><div class="pl">Monthly<small>Billed every month</small></div><div class="pr">$5.99<small>/month</small></div></div>
+
+        <button class="btn btn-blue" style="margin:6px 0 9px" onclick="closePaywall()">Start 7-day free trial</button>
+        <button class="btn btn-ghost" onclick="closePaywall()">Stay on free Citizen</button>
+        <p style="color:#6f747d;font-size:11.5px;text-align:center;margin:11px 0 2px;line-height:1.5">No charge during trial · cancel anytime · safety features never expire. <span style="color:#9498a1">Terms & Privacy</span></p>
+      </div>
+    </div>
+  </div><!-- /phone -->
+
+  <!-- ===================== BEFORE / AFTER ===================== -->
+  <div id="compare">
+    <div class="cmp">
+      <h3>1 · Subscription: hard wall → optional</h3>
+      <div class="col before"><div class="lab">Before</div>
+        <p>Profile leads with a large "Upgrade to Premium — gain access to all of Citizen." Safety Network shows a lock. Alerts customization sits behind a Premium banner.</p>
+        <ul><li>Implies core safety is paywalled</li><li>FOMO-driven, erodes trust on a safety app</li><li>New users bounce before first value</li></ul>
+      </div>
+      <div class="col after"><div class="lab">After</div>
+        <p>Premium reframed as "Optional." A soft sheet lists genuine power-user extras; safety-critical features are explicitly "Always free." "Continue with free Citizen" is a first-class button.</p>
+        <ul><li>Trust-first → better retention → better conversion</li><li>Premium = real added value, not a hostage</li><li>Clear free vs paid line</li></ul>
+      </div>
+    </div>
+    <div class="cmp">
+      <h3>2 · Alerts: locked → fully customizable (free)</h3>
+      <div class="col before"><div class="lab">Before</div>
+        <p>"Customize your alerts — set a custom notification area and choose exactly the types you want" is a Premium upsell. Default = everything, citywide. Repeated pings.</p>
+        <ul><li>The core promise (right alert, right place) is gated</li><li>Drives the "Citizen makes me anxious" reputation</li><li>Users mute or uninstall instead of tuning</li></ul>
+      </div>
+      <div class="col after"><div class="lab">After</div>
+        <p>Free Alert filters: per-type toggles, distance radius, quiet hours, Calm mode (group repeats, mute non-critical overnight, life-safety always through).</p>
+        <ul><li>Signal the user chose, not a firehose</li><li>Directly counters the anxiety critique</li><li>Premium still sells multi-zone & history</li></ul>
+      </div>
+    </div>
+    <div class="cmp">
+      <h3>3 · New core: Walk With Me (同行守护)</h3>
+      <div class="col before"><div class="lab">Before</div>
+        <p>Safety Network, Friends and Location Sharing exist only as static profile settings showing "0" — passive, set-and-forget, rarely used in the moment.</p>
+        <ul><li>No in-the-moment safety action</li><li>Network value invisible until an emergency</li></ul>
+      </div>
+      <div class="col after"><div class="lab">After</div>
+        <p>One tap from the map: share a live moving route + ETA with trusted people; auto-alert if you stop or arrive late; "I arrived safely" to end. Free.</p>
+        <ul><li>Activates the network users already set up</li><li>A daily reason to open the app proactively</li></ul>
+      </div>
+    </div>
+    <div class="cmp">
+      <h3>4 · New core: Trust & context layer (社区参与 / 可信度)</h3>
+      <div class="col before"><div class="lab">Before</div>
+        <p>Incidents show raw reports + view counts. No confidence signal, no personal relevance, no way for the crowd to resolve a stale alert.</p>
+        <ul><li>Unverified reports spread panic</li><li>Old alerts linger as if live</li></ul>
+      </div>
+      <div class="col after"><div class="lab">After</div>
+        <p>Each incident gets a confirmation/trust badge, Still-active / Resolved buttons that build reporter trust scores and auto-expire stale alerts.</p>
+        <ul><li>Calms instead of alarms</li><li>Self-cleaning, community-verified feed</li></ul>
+      </div>
+    </div>
+    <div class="cmp">
+      <h3>6 · Go Live: confusing → a transparent, end-to-end flow</h3>
+      <div class="col before"><div class="lab">Before</div>
+        <p>Tapping Go Live drops you straight onto a record screen. It never explains how long to record, what the upload steps are, whether anyone reviews it, where the video ends up, or how to find your past uploads.</p>
+        <ul><li>First-time users don't know what will happen</li><li>No confirmation of where the video went</li><li>No history of your own broadcasts anywhere</li></ul>
+      </div>
+      <div class="col after"><div class="lab">After</div>
+        <p>A clear 4-step flow: an upfront "how it works" model + length guidance → recording with a timer and safety prompt → a review screen that states anonymity, moderation, audience and location before posting → an upload pipeline (Uploaded → Safety review → Published) → a confirmation showing exactly where it went, plus a new "Your broadcasts" history with status chips.</p>
+        <ul><li>Every step says what happens next</li><li>Closes the loop: map + thread + saved history</li><li>Turns a confusing feature into a trustworthy one</li></ul>
+      </div>
+    </div>
+    <div class="cmp">
+      <h3>7 · News: one firehose → manual filters + a transparent AI filter</h3>
+      <div class="col before"><div class="lab">Before</div>
+        <p>News pushes everything in one undifferentiated stream — no category filters, no way to narrow by relevance or distance, and no explanation of why a given story is shown.</p>
+        <ul><li>Citywide noise drowns what matters to you</li><li>No manual control over the feed</li><li>Can't tell what's ranked vs. chronological</li></ul>
+      </div>
+      <div class="col after"><div class="lab">After</div>
+        <p>A segmented view (For you / Nearby / All) + scrollable category chips for manual control — all <b>free</b>. On top, a Premium <b>AI Smart Filter</b> auto-hides low-relevance citywide noise and labels <i>why</i> each item surfaced ("matches your commute," "within your alert radius"). Clean line: manual control is free; AI doing the work for you is the paid value-add. AI never hides safety-critical alerts.</p>
+        <ul><li>Free manual control; Premium AI auto-curation</li><li>Every item explains why it's there</li><li>Monetizes value-add, not basics</li></ul>
+      </div>
+    </div>
+    <div class="cmp">
+      <h3>8 · Premium: vague one-feature pitch → a clear value comparison</h3>
+      <div class="col before"><div class="lab">Before</div>
+        <p>The paywall sells a single feature ("listen to full police & fire radio clips") with two prices and no explanation of what else changes. It's impossible to tell what you actually get versus the free tier — it reads as untrustworthy.</p>
+        <ul><li>One feature shown; the rest is a mystery</li><li>No free-vs-paid comparison</li><li>Low trust → low considered conversion</li></ul>
+      </div>
+      <div class="col after"><div class="lab">After</div>
+        <p>A side-by-side Free vs Premium table spelling out every feature and the exact difference (e.g. alert zones 1 → 5, history 24h → full, radio audio, advanced AI). Core safety is visibly free. Clear plan choice, 7-day trial, "cancel anytime, safety never expires."</p>
+        <ul><li>Buyer sees precisely what upgrading adds</li><li>Honesty about what stays free builds trust</li><li>Informed conversion, fewer refunds/churn</li></ul>
+      </div>
+    </div>
+    <div class="cmp">
+      <h3>9 · New Premium feature: AI Deep Filter (worth paying for)</h3>
+      <div class="col before"><div class="lab">Before</div>
+        <p>Premium's headline perk is "listen to police & fire radio" — niche, and it gates basics like alert customization to drive upgrades. There's no premium feature that meaningfully reduces the app's core pain (noise & anxiety).</p>
+        <ul><li>Pays by withholding basics, not by adding value</li><li>No AI help separating signal from noise</li></ul>
+      </div>
+      <div class="col after"><div class="lab">After</div>
+        <p>A Premium <b>AI Deep Filter</b> that scores every alert by importance, credibility and relevance, merges duplicates, and strips vague single-source noise — surfacing only what matters (e.g. 47 → 6). Tunable threshold, per-rule toggles, and full transparency: it explains its reasoning, <b>never deletes</b> anything, and <b>never hides life-safety</b> alerts.</p>
+        <ul><li>A perk people will gladly pay for on a safety app</li><li>Directly attacks the noise/anxiety problem</li><li>Premium earns its price by adding value, not gating basics</li></ul>
+      </div>
+    </div>
+    <div class="cmp">
+      <h3>10 · New core: Safe Route — incident-aware routing</h3>
+      <div class="col before"><div class="lab">Before</div>
+        <p>Citizen shows incidents on a map but does nothing with them for navigation. To avoid a dangerous block you have to eyeball the map, then plan a route yourself in a separate app.</p>
+        <ul><li>Rich incident data goes unused for routing</li><li>No bridge between "what's happening" and "how I get there safely"</li></ul>
+      </div>
+      <div class="col after"><div class="lab">After</div>
+        <p>Enter a start + destination; Citizen scans active incidents along the way and suggests a detour (e.g. "Take Jackson Ave instead — +3 min, avoids the incident on 44th Dr"). It hands off to Google Maps by passing the detour as a <b>waypoint</b>, so Maps is nudged onto the safer path. CTA is <b>"Open safer route in Google Maps"</b> — never "guaranteed safe" — with an upfront note that Maps may re-route on live traffic.</p>
+        <ul><li>Turns incident data into a real routing input</li><li>Honest handoff: waypoint nudge, not a false guarantee</li><li>Works with the app people already navigate in</li></ul>
+      </div>
+    </div>
+    <div class="cmp">
+      <h3>11 · Alerts: passive read → geo-gated "Go Live from here"</h3>
+      <div class="col before"><div class="lab">Before</div>
+        <p>Alerts are read-only. If you're standing right at an incident, there's no quick path from the notification to contributing footage — and nothing stops someone far away from posting misleading "coverage."</p>
+        <ul><li>No bridge from alert → on-scene contribution</li><li>Remote/fake footage is possible</li></ul>
+      </div>
+      <div class="col after"><div class="lab">After</div>
+        <p>Each alert carries a <b>Go Live from here</b> button that's <b>geo-gated</b>: only enabled when you're inside the incident's radius. Nearby alerts show a live button; far ones are disabled with the reason ("be within 0.5 mi to record").</p>
+        <ul><li>Bystanders become verified on-scene sources</li><li>Location gating blocks remote/fake footage by design</li><li>One tap from "what's happening" to "here's what I see"</li></ul>
+      </div>
+    </div>
+    <div class="cmp">
+      <h3>5 · AI: invisible → transparent + a calm summary</h3>
+      <div class="col before"><div class="lab">Before</div>
+        <p>Where AI touches ranking or copy it's unlabelled. Users can't tell what's machine-generated, what data it used, or whether it might be wrong. Feeds are raw and alarming.</p>
+        <ul><li>No disclosure → erodes trust on a safety app</li><li>"Is this about me?" takes scrolling to answer</li></ul>
+      </div>
+      <div class="col after"><div class="lab">After</div>
+        <p>Every AI element carries an "AI-generated" badge with an expandable "How this was made" (what it did, sources, data used, a "can be wrong / call 911" caveat). A calm AI Incident Summary leads with a one-line recap + personal relevance. AI can be toggled off.</p>
+        <ul><li>Full transparency, per the public-safety bar</li><li>Relevance answered in one glance</li><li>AI assists; verification stays human</li></ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function go(id){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    const b=document.querySelector('#'+id+' .body'); if(b) b.scrollTop=0;
+  }
+  function setNav(n){document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.nav===n))}
+  function tog(el){el.classList.toggle('on')}
+  function toggleNotes(){document.body.classList.toggle('notes');document.getElementById('t-notes').classList.toggle('on')}
+  function toggleCompare(){
+    const c=document.getElementById('compare'),p=document.getElementById('phone');
+    const on=c.classList.toggle('show');
+    document.getElementById('t-cmp').classList.toggle('on',on);
+    p.classList.toggle('hidden',on);
+  }
+  function confirmInc(btn,txt){
+    btn.innerHTML='<svg class="ic"><use href="#i-check"/></svg> '+txt;
+    btn.style.background='#0d2016';btn.style.color='#7fe6a8';btn.style.borderColor='#1f5234';
+  }
+  // Go Live flow
+  function pickCat(el){
+    document.querySelectorAll('#golive .ptag').forEach(t=>{t.style.background='';t.style.borderColor='';t.style.color=''});
+    el.style.background='#11233a';el.style.borderColor='#2f6bff';el.style.color='#cfe0ff';
+  }
+  let recT=null, recS=0;
+  function startRec(){
+    go('glv-rec'); recS=0;
+    document.getElementById('recTime').textContent='0:00';
+    clearInterval(recT);
+    recT=setInterval(()=>{recS++;const m=Math.floor(recS/60),s=recS%60;
+      document.getElementById('recTime').textContent=m+':' +String(s).padStart(2,'0');},1000);
+  }
+  function stopRec(){
+    clearInterval(recT);
+    const m=Math.floor(recS/60),s=recS%60, d=m+':'+String(s).padStart(2,'0');
+    const rv=document.getElementById('revDur'); if(rv) rv.textContent = recS>0? d : '0:23';
+    go('glv-review');
+  }
+  function runUpload(){
+    const ps2=document.getElementById('ps2'),ps3=document.getElementById('ps3'),chip=document.getElementById('ps2chip');
+    setTimeout(()=>{
+      ps2.className='pipe-step done'; ps2.querySelector('.dot').innerHTML='<svg class="ic" style="font-size:15px"><use href="#i-check"/></svg>';
+      chip.className='statuschip live'; chip.textContent='APPROVED';
+      ps3.className='pipe-step active'; ps3.querySelector('.dot').innerHTML='<svg class="ic" style="font-size:14px"><use href="#i-radio"/></svg>';
+    },2200);
+  }
+  function segSel(b){b.parentElement.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on')}
+  function fSel(b){b.parentElement.querySelectorAll('.fchip').forEach(x=>x.classList.remove('on'));b.classList.add('on')}
+  function selPlan(b){b.parentElement.querySelectorAll('.price').forEach(x=>x.classList.remove('sel'));b.classList.add('sel')}
+  function rSel(b){document.querySelectorAll('#route-result .routeopt').forEach(x=>x.classList.remove('rec'));b.classList.add('rec')}
+  function openPaywall(){document.getElementById('paywall').classList.add('active')}
+  function closePaywall(){document.getElementById('paywall').classList.remove('active')}
+  window.addEventListener('load',()=>{
+    const pc=document.getElementById('premiumCard'); if(pc) pc.addEventListener('click',openPaywall);
+  });
+</script>
+</body>
+</html>
