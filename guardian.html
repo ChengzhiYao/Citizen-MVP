@@ -128,6 +128,8 @@
   .sevchip{font-size:9px;font-weight:800;padding:2px 6px;border-radius:5px;letter-spacing:.04em}
   .sevchip.high{background:#2a0f0c;border:1px solid #5c1f18;color:#ff8a80}
   .sevchip.med{background:#241803;border:1px solid #5c4310;color:#ffcf80}
+  .sevchip.reg{background:#191b22;border:1px solid #322a5e;color:#b9aee6}
+  .threat.reg .ti{background:#191430;border-color:#322a5e;color:#b9aee6}
   .sr-det{margin-top:11px;border-top:1px solid #23262e;padding-top:11px}
   .sr-det summary{cursor:pointer;font-size:12px;color:#9aa0a8;font-weight:600;list-style:none;display:flex;align-items:center;gap:7px}
   .sr-det summary::-webkit-details-marker{display:none}
@@ -706,10 +708,15 @@ function srThreats(){
   const g=(S.directGeom&&S.directGeom.length>2)?S.directGeom:[S.start,S.dest];
   const a=g[Math.max(1,Math.round(g.length*0.40))]||S.start;
   const b=g[Math.max(1,Math.round(g.length*0.68))]||S.dest;
-  return [
+  const list=[
     {ll:[a[0]+0.00012,a[1]+0.00012],sev:'high',icon:'alert',name:'Reported assault',recency:'8 min ago',conf:5,dist:'right on your fastest route',why:'Violent + confirmed by 5 people, directly on your direct path'},
     {ll:[b[0]+0.00012,b[1]+0.00012],sev:'med',icon:'users',name:'Harassment reports',recency:'20 min ago',conf:3,dist:'right on your fastest route',why:'Matches "suspicious person / harassment" in your filters'}
   ];
+  if(CFG.filters.types.registry){
+    const c=g[Math.max(1,Math.round(g.length*0.55))]||S.dest;
+    list.push({ll:[c[0]-0.00012,c[1]+0.00014],sev:'reg',icon:'home',name:'Registered offender address',recency:'Public registry',conf:'—',dist:'on your fastest route',why:'You turned on registered-address routing in Filters. Public data — not an active incident, and shown without any names.'});
+  }
+  return list;
 }
 function showSafeRoute(){
   S.phase='saferoute';
@@ -723,19 +730,24 @@ function showSafeRoute(){
   try{ S.map.fitBounds(S.cmp.direct.getBounds().pad(0.35)); }catch(e){}
   const vv=S.route[Math.round(S.route.length*0.5)]||S.start;
   const gmaps='https://www.google.com/maps/dir/?api=1&origin='+S.start[0]+','+S.start[1]+'&destination='+S.dest[0]+','+S.dest[1]+'&waypoints='+vv[0]+','+vv[1]+'&travelmode=walking';
-  const rows=threats.map(function(t){return '<div class="threat '+(t.sev==='high'?'hi':'')+'">'+
+  const rows=threats.map(function(t){
+    var cls=t.sev==='high'?'hi':(t.sev==='reg'?'reg':'');
+    var chip=t.sev==='reg'?'REGISTRY':t.sev.toUpperCase();
+    var td=t.recency+(t.conf&&t.conf!=='—'?' · '+t.conf+' confirmations':'')+' · '+t.dist;
+    return '<div class="threat '+cls+'">'+
     '<div class="ti">'+ic(t.icon,17)+'</div><div style="flex:1">'+
-    '<div class="tn">'+t.name+' <span class="sevchip '+t.sev+'">'+t.sev.toUpperCase()+'</span></div>'+
-    '<div class="td">'+t.recency+' · '+t.conf+' confirmations · '+t.dist+'</div>'+
+    '<div class="tn">'+t.name+' <span class="sevchip '+t.sev+'">'+chip+'</span></div>'+
+    '<div class="td">'+td+'</div>'+
     '<div class="tw">'+ic('spark',11)+' Avoided because: '+t.why+'</div></div></div>';}).join('');
+  const regNote=CFG.filters.types.registry?'<br><br><b>About registered addresses:</b> this uses public sex-offender registry data. A listing is <b>not evidence of current danger</b> and is not a substitute for your judgment — it\'s here only so you can set your own comfort level. Guardian shows no names or photos, and this must never be used to harass anyone.':'';
   document.getElementById('sheet').innerHTML=
     '<div class="panel" style="max-height:64vh;overflow-y:auto">'+
-      '<div class="statusbar"><span class="sdot amber"></span><div><div class="st">Your usual route passes 2 active incidents</div><div class="ss">Guardian found a safer way tonight</div></div><span class="aibadge" style="margin-left:auto">'+ic('spark',12)+' AI</span></div>'+
+      '<div class="statusbar"><span class="sdot amber"></span><div><div class="st">Your usual route passes '+threats.length+' flagged locations</div><div class="ss">Guardian found a safer way tonight</div></div><span class="aibadge" style="margin-left:auto">'+ic('spark',12)+' AI</span></div>'+
       '<div class="legend"><span><i style="background:#ff453a"></i> Usual · fastest</span><span><i style="background:#30d158"></i> Safer · +3 min</span></div>'+
       rows+
       '<div class="why" style="margin-top:12px"><b>Safer route on lower-risk streets.</b> Adds ~3 min, but stays at least a block from every incident above.</div>'+
       '<details class="sr-det"><summary>'+ic('info',13)+' How this route was decided</summary>'+
-        '<div class="sr-d">Guardian compared your fastest route against 3 alternatives and scored each by <b>active incidents within 50 m</b>, weighted by <b>severity, credibility, and how recent</b> they are, then chose the lowest-risk route with an acceptable time cost.<br><br>It uses only <b>Citizen incident reports + your route</b> — no other personal data — and re-checks continuously as you walk. When you open directions it hands off to Google Maps with a <b>waypoint</b> on the safer street; Maps may still re-route on live traffic, so this isn\'t a guaranteed path. <b>AI can be wrong — trust what you see, and call 911 in an emergency.</b></div>'+
+        '<div class="sr-d">Guardian compared your fastest route against 3 alternatives and scored each by <b>active incidents within 50 m</b>, weighted by <b>severity, credibility, and how recent</b> they are, then chose the lowest-risk route with an acceptable time cost.<br><br>It uses only <b>Citizen incident reports + your route</b> — no other personal data — and re-checks continuously as you walk. When you open directions it hands off to Google Maps with a <b>waypoint</b> on the safer street; Maps may still re-route on live traffic, so this isn\'t a guaranteed path. <b>AI can be wrong — trust what you see, and call 911 in an emergency.</b>'+regNote+'</div>'+
       '</details>'+
       '<button class="btn btn-blue" style="margin-top:14px" onclick="closeSafeRoute();startWalk()">'+ic('shield',17)+' Walk the safer route</button>'+
       '<div style="height:8px"></div>'+
@@ -748,7 +760,7 @@ function closeSafeRoute(){ clearCmp(); if(S.layers.route)S.layers.route.setStyle
 
 /* ===== config / onboarding / filters / check-in / SOS ===== */
 function cfgDefaults(){return {onboarded:false,contacts:['Mom','Alex'],home:'67-83 223rd Pl',
-  filters:{types:{violent:true,police:true,fire:true,suspicious:true,crowds:false,traffic:false},threshold:'serious',radius:'block'},
+  filters:{types:{violent:true,police:true,fire:true,suspicious:true,crowds:false,traffic:false,registry:false},threshold:'serious',radius:'block'},
   checkin:5};}
 let CFG=cfgDefaults();
 function loadCfg(){try{const j=localStorage.getItem('guardianCfg');if(j)CFG=Object.assign(cfgDefaults(),JSON.parse(j));}catch(e){}}
@@ -827,6 +839,9 @@ function filterControlsHTML(){
     row('suspicious','Suspicious person / harassment','Following, harassment reports')+
     row('crowds','Crowds / unrest','Protests, large gatherings')+
     row('traffic','Traffic hazards','For biking / crossing')+
+    '<div class="sec">Route planning · sensitive</div>'+
+    row('registry','Registered offender addresses','Public registry data · off by default')+
+    '<div class="infobox" style="margin-top:2px;font-size:11px;color:#b9aee6;border-color:#322a5e;background:#141030">Uses public sex-offender registry data (e.g. Megan\'s Law). A listing is <b>not proof of current danger</b> and isn\'t a substitute for your judgment — it\'s here so you can set your own comfort level. Guardian shows <b>no names or photos</b>, and this must never be used to harass anyone.</div>'+
     '<div class="sec">Interrupt me for</div>'+seg('threshold',[['serious','Only serious on my path'],['medium','Medium & up'],['all','Everything']])+
     '<div class="sec">Watch radius</div>'+seg('radius',[['block','1 block'],['quarter','0.25 mi'],['half','0.5 mi']])+
     '<div class="sec">Safety check-in</div>'+
