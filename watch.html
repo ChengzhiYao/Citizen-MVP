@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Guardian — Watch</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;background:#000;color:#f4f5f7;font-family:"Inter",system-ui,sans-serif;letter-spacing:-.01em;overflow:hidden}
+  #map{position:absolute;inset:0;background:#0a0d13;z-index:1}
+  .top{position:absolute;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;justify-content:space-between;
+    padding:calc(14px + env(safe-area-inset-top)) 16px 12px;background:linear-gradient(180deg,rgba(0,0,0,.88),transparent)}
+  .top .t{font-size:18px;font-weight:700;display:flex;align-items:center;gap:8px}
+  .live{display:inline-flex;align-items:center;gap:6px;background:rgba(18,20,26,.85);border:1px solid #2a2d36;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:600}
+  .live .d{width:8px;height:8px;border-radius:50%;background:#30d158;animation:p 1.4s infinite}
+  .live.off .d{background:#5f636c;animation:none}
+  @keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
+  .sheet{position:absolute;left:0;right:0;bottom:0;z-index:20;padding:14px 16px calc(16px + env(safe-area-inset-bottom));
+    background:linear-gradient(180deg,transparent,rgba(8,9,12,.92) 22%)}
+  .card{background:rgba(12,13,17,.94);backdrop-filter:blur(16px);border:1px solid #23262e;border-radius:22px;padding:16px}
+  .row{display:flex;align-items:center;gap:11px;margin-bottom:12px}
+  .row .dot{width:13px;height:13px;border-radius:50%;background:#30d158;box-shadow:0 0 0 5px rgba(48,209,88,.16);flex:0 0 13px}
+  .row .st{font-size:15px;font-weight:700}
+  .row .ss{font-size:12px;color:#969aa3;margin-top:1px}
+  .row .eta{margin-left:auto;font-size:11px;font-weight:700;background:#0e2417;border:1px solid #1f5234;color:#5fe39a;padding:4px 10px;border-radius:999px}
+  .btn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;background:#ff453a;color:#fff}
+  .btn:disabled{opacity:.5}
+  .note{color:#7c818b;font-size:11.5px;line-height:1.5;margin:10px 2px 0;text-align:center}
+  .meMk{width:20px;height:20px;border-radius:50%;background:#2f6bff;border:3px solid #fff;box-shadow:0 0 0 7px rgba(47,107,255,.25)}
+  .ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.14em}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="top">
+  <div class="t"><svg class="ic" style="font-size:17px" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Watching Jess</div>
+  <div class="live off" id="live"><span class="d"></span> <span id="liveT">Connecting…</span></div>
+</div>
+<div class="sheet">
+  <div class="card">
+    <div class="row"><span class="dot" id="wdot"></span><div><div class="st" id="wst">Waiting for Jess to start Guardian…</div><div class="ss" id="wss">You'll see her live location here</div></div><span class="eta" id="weta" style="display:none"></span></div>
+    <button class="btn" id="inject" onclick="inject()" disabled>
+      <svg class="ic" style="font-size:16px" viewBox="0 0 24 24"><path d="M10.3 3.9 2 18a2 2 0 0 0 1.7 3h16.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+      Inject incident ahead (demo)
+    </button>
+    <div class="note">Simulates a real report appearing on Jess's path. Guardian will detect it and proactively reroute her — live.</div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPA_URL='https://foazjihpcfzrjdvnlpqg.supabase.co';
+const SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZvYXpqaWhwY2Z6cmpkdm5scHFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzNTMzOTYsImV4cCI6MjA5ODkyOTM5Nn0.DecB0rT9ueM3JevF-FVFjm1FOzw39KD1KcU9Q6Ksxjc';
+const CODE='DEMO';
+const sb=window.supabase.createClient(SUPA_URL,SUPA_ANON);
+
+let map=L.map('map',{zoomControl:false,attributionControl:false}).setView([40.7305,-73.7920],16);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:20}).addTo(map);
+let marker=null, last=null;
+
+function render(s){
+  if(!s || s.lat==null) return;
+  last=s;
+  const ll=[s.lat,s.lng];
+  if(!marker){ marker=L.marker(ll,{icon:L.divIcon({html:'<div class=meMk></div>',className:'',iconSize:[20,20],iconAnchor:[10,10]})}).addTo(map); map.setView(ll,16); }
+  else marker.setLatLng(ll);
+  map.panTo(ll,{animate:true,duration:.5});
+  document.getElementById('live').className='live';
+  document.getElementById('liveT').textContent='Live';
+  document.getElementById('inject').disabled = (s.status!=='active');
+  const arrived = s.status==='arrived';
+  document.getElementById('wdot').style.background = arrived ? '#30d158' : '#2f6bff';
+  document.getElementById('wst').textContent = arrived ? 'Jess arrived safely' : 'Jess is walking home';
+  document.getElementById('wss').textContent = arrived ? 'Guardian ended' : 'Live location · Guardian active';
+  const eta=document.getElementById('weta');
+  if(s.eta && !arrived){ eta.style.display=''; eta.textContent='ETA '+s.eta; } else eta.style.display='none';
+}
+
+async function load(){
+  const {data}=await sb.from('walk_sessions').select('*').eq('code',CODE).maybeSingle();
+  if(data) render(data);
+}
+sb.channel('watch').on('postgres_changes',
+  {event:'*',schema:'public',table:'walk_sessions',filter:'code=eq.'+CODE},
+  p=>render(p.new)).subscribe();
+load();
+setInterval(load,4000); // fallback poll
+
+async function inject(){
+  const btn=document.getElementById('inject');
+  btn.disabled=true; btn.textContent='Injecting…';
+  const lat = last?last.lat:40.7305, lng = last?last.lng:-73.7920;
+  await sb.from('incidents').insert({type:'Police activity',severity:'high',credibility:'confirmed',street:'44th Dr',confirmations:6,lat,lng});
+  setTimeout(()=>{ btn.innerHTML='✓ Incident sent to Jess'; },300);
+  setTimeout(()=>{ btn.disabled=false; btn.textContent='Inject another'; },3000);
+}
+</script>
+</body>
+</html>

@@ -76,6 +76,40 @@
   .why2{display:inline-flex;align-items:center;gap:5px;background:#100d1f;border:1px solid #2e2856;color:#b6aae6;font-size:10.5px;font-weight:600;padding:3px 8px;border-radius:999px;margin-top:8px}
   .catchip{display:inline-flex;align-items:center;gap:4px;background:#191b22;border:1px solid #2a2d35;color:#aeb3bc;font-size:10px;font-weight:600;padding:2px 7px;border-radius:6px}
   .bluedot{width:7px;height:7px;border-radius:50%;background:var(--blue);display:inline-block;flex:0 0 7px}
+  /* onboarding + filters */
+  .ob{position:absolute;inset:0;z-index:60;background:#000;display:none;flex-direction:column}
+  .ob.show{display:flex}
+  .ob-top{padding:calc(16px + env(safe-area-inset-top)) 18px 6px;display:flex;align-items:center;justify-content:space-between}
+  .ob-prog{display:flex;gap:6px}
+  .ob-prog i{width:22px;height:4px;border-radius:2px;background:#23262e}
+  .ob-prog i.on{background:#2f6bff}
+  .ob-skip{background:none;border:none;color:#9498a1;font-family:inherit;font-size:13px;cursor:pointer}
+  .ob-body{flex:1;overflow-y:auto;padding:12px 18px 0}
+  .ob-body h2{font-size:23px;font-weight:800;letter-spacing:-.02em;margin:10px 0 8px;line-height:1.15}
+  .ob-body .sub{color:#a4a9b2;font-size:14px;line-height:1.5;margin:0 0 18px}
+  .ob-foot{padding:12px 18px calc(16px + env(safe-area-inset-bottom))}
+  .ob-hero{width:56px;height:56px;border-radius:16px;background:#0c0f1c;border:1px solid #24407a;display:flex;align-items:center;justify-content:center;color:#8fb4ff;margin-bottom:6px}
+  .addchip{display:inline-flex;align-items:center;gap:7px;background:#14151b;border:1px solid #2a2d35;border-radius:999px;padding:10px 15px;font-size:13.5px;color:#dfe2e8;cursor:pointer;margin:0 8px 9px 0}
+  .addchip.sel{background:#0c0f1c;border-color:#2f6bff;color:#cfe0ff}
+  .field{width:100%;background:#101117;border:1px solid #2a2d35;border-radius:12px;padding:14px;color:#fff;font-family:inherit;font-size:15px;outline:none;margin-bottom:10px}
+  .seg2{display:flex;gap:4px;background:#101117;border:1px solid #20232b;border-radius:12px;padding:4px;margin-bottom:14px}
+  .seg2 button{flex:1;background:none;border:none;color:#9498a1;font-family:inherit;font-size:12px;font-weight:600;padding:10px 6px;border-radius:9px;cursor:pointer;line-height:1.2}
+  .seg2 button.on{background:#22252e;color:#fff}
+  .swrow{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid #15171d}
+  .swrow:last-child{border-bottom:none}
+  .swrow .st{font-weight:600;font-size:14.5px}
+  .swrow .ss{font-size:12px;color:#969aa3;margin-top:2px}
+  .sw{width:44px;height:26px;border-radius:999px;background:#2b2e37;position:relative;cursor:pointer;flex:0 0 44px;transition:.2s}
+  .sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s}
+  .sw.on{background:#30d158}
+  .sw.on::after{left:21px}
+  .infobox{background:#0f1622;border:1px solid #1d3050;border-radius:12px;padding:12px 13px;font-size:12.5px;color:#cfe0ff;line-height:1.5;margin-top:6px}
+  .sec{font-size:11.5px;color:#7c818b;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin:16px 2px 8px}
+  #checkin{position:absolute;top:calc(70px + env(safe-area-inset-top));left:16px;right:16px;z-index:55;display:none}
+  #checkin.show{display:block;animation:up .3s ease}
+  #sosModal{position:absolute;inset:0;z-index:80;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.6)}
+  #sosModal.show{display:flex;animation:fade .2s}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
   .clock{display:flex;align-items:center;gap:7px;background:rgba(18,20,26,.85);backdrop-filter:blur(10px);border:1px solid #2a2d36;
     border-radius:999px;padding:7px 13px;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
   .clock .dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
@@ -235,7 +269,7 @@
     <div class="ccard" style="display:flex;gap:12px;align-items:center">
       <div style="width:40px;height:40px;border-radius:11px;background:#1a1c24;display:flex;align-items:center;justify-content:center;color:#cfd3da;flex:0 0 40px"><svg class="ic" style="font-size:19px"><use href="#g-sliders"/></svg></div>
       <div style="flex:1"><div style="font-weight:600;font-size:14px;display:flex;align-items:center;gap:7px">Customize your alerts <span class="freechip">FREE</span></div><div style="color:#969aa3;font-size:12px;margin-top:2px">Pick exactly what you're notified about, and where.</div></div>
-      <button class="btn btn-blue" style="width:auto;padding:9px 13px;font-size:13px;border-radius:11px" onclick="toast('Alert filters')">Set up</button>
+      <button class="btn btn-blue" style="width:auto;padding:9px 13px;font-size:13px;border-radius:11px" onclick="openFilters()">Set up</button>
     </div>
     <div class="ccard" style="border-color:#2e2856;background:#100d1f;display:flex;gap:12px;align-items:center" onclick="toast('Premium — AI Deep Filter')">
       <div style="width:40px;height:40px;border-radius:11px;background:#15112a;border:1px solid #352a63;display:flex;align-items:center;justify-content:center;color:#bfb0ff;flex:0 0 40px"><svg class="ic" style="font-size:19px"><use href="#g-spark"/></svg></div>
@@ -257,11 +291,19 @@
       <span class="chev" style="color:#565a63"><svg class="ic"><use href="#g-chevR"/></svg></span>
     </div>
     <div class="ccard" style="padding:2px 15px">
+      <div class="planline" onclick="startOnboard()" style="cursor:pointer"><div class="pic"><svg class="ic" style="font-size:16px"><use href="#g-shield"/></svg></div><div style="flex:1"><div class="pt">Set up Guardian</div><div class="ps">Re-run onboarding — contacts, home, filters</div></div><span class="chev" style="color:#565a63"><svg class="ic"><use href="#g-chevR"/></svg></span></div>
+      <div class="planline" onclick="openFilters()" style="cursor:pointer"><div class="pic"><svg class="ic" style="font-size:16px"><use href="#g-sliders"/></svg></div><div style="flex:1"><div class="pt">Filters &amp; safety</div><div class="ps">What to monitor · interrupt threshold · check-in</div></div><span class="chev" style="color:#565a63"><svg class="ic"><use href="#g-chevR"/></svg></span></div>
       <div class="planline"><div class="pic"><svg class="ic" style="font-size:16px"><use href="#g-shield"/></svg></div><div style="flex:1"><div class="pt">Safety Network <span class="freechip">2</span></div><div class="ps">People who escort & get your alerts</div></div><span class="chev" style="color:#565a63"><svg class="ic"><use href="#g-chevR"/></svg></span></div>
       <div class="planline"><div class="pic"><svg class="ic" style="font-size:16px"><use href="#g-video"/></svg></div><div style="flex:1"><div class="pt">Your broadcasts <span class="freechip">3</span></div><div class="ps">Videos you've posted · status & views</div></div><span class="chev" style="color:#565a63"><svg class="ic"><use href="#g-chevR"/></svg></span></div>
       <div class="planline"><div class="pic"><svg class="ic" style="font-size:16px"><use href="#g-pin"/></svg></div><div style="flex:1"><div class="pt">Location Sharing</div><div class="ps">With Friends & Safety Network</div></div><span class="chev" style="color:#565a63"><svg class="ic"><use href="#g-chevR"/></svg></span></div>
     </div>
   </div></div>
+
+  <!-- overlays: onboarding, filters, check-in, SOS -->
+  <div class="ob" id="onboard"></div>
+  <div class="ob" id="filtersScreen"></div>
+  <div id="checkin"></div>
+  <div id="sosModal"></div>
 
   <!-- Citizen bottom nav -->
   <nav class="cnav">
@@ -391,7 +433,7 @@ function renderIdle(){
       <div class="qrow">
         <div class="quick" onclick="toast('Walk With Me — folded into Guardian')">${ic('shield',17)} Walk With Me</div>
         <div class="quick" onclick="toast('Safe Route — folded into Guardian')">${ic('nav',17)} Safe Route</div>
-        <div class="quick" onclick="toast('Alert filters')">${ic('sliders',17)} Filters</div>
+        <div class="quick" onclick="openFilters()">${ic('sliders',17)} Filters</div>
       </div>
       <button class="btn btn-blue" onclick="showPlan()">${ic('shield',18)} Start Guardian</button>
       <p style="color:#7c818b;font-size:11.5px;text-align:center;line-height:1.5;margin:10px 2px 0">One tap runs all three together — safest route + live escort + AI monitoring — instead of setting each up separately.</p>
@@ -399,17 +441,21 @@ function renderIdle(){
 }
 function showPlan(){
   S.phase='plan';
+  const names=CFG.contacts.length?CFG.contacts.join(' · '):'no one yet — add contacts';
+  const nTypes=Object.keys(CFG.filters.types).filter(function(k){return CFG.filters.types[k];}).length;
+  const thL={serious:'only serious ones on your path',medium:'medium & up',all:'everything nearby'}[CFG.filters.threshold];
+  const ciL=CFG.checkin?(' · check-in every '+CFG.checkin+' min'):'';
   document.getElementById('sheet').innerHTML=`
     <div class="panel">
       <h2>Your Guardian plan ${'<span class=\"aibadge\" style=\"vertical-align:2px\">'+ic('spark',12)+' AI</span>'}</h2>
-      <p class="lede">Walking home · 0.6 mi · ETA ~12 min. Here's what I'll do:</p>
-      <div class="planline"><div class="pic">${ic('nav',16)}</div><div><div class="pt">Safest route selected</div><div class="ps">Avoids 2 higher-activity blocks near Northern Blvd</div></div><span class="tag">READY</span></div>
-      <div class="planline"><div class="pic">${ic('spark',16)}</div><div><div class="pt">Monitoring 3 incidents on your path</div><div class="ps">I'll only interrupt you if one turns risky</div></div><span class="tag">LIVE</span></div>
-      <div class="planline"><div class="pic">${ic('users',16)}</div><div><div class="pt">Sharing with Mom · Alex</div><div class="ps">They see your live location + ETA</div></div><span class="tag">ON</span></div>
+      <p class="lede">Walking to ${CFG.home||'home'} · 0.6 mi · ETA ~12 min.</p>
+      <div class="planline"><div class="pic">${ic('nav',16)}</div><div><div class="pt">Safer route chosen</div><div class="ps">Avoids the higher-activity blocks on your usual way — tap during the walk to see why</div></div><span class="tag">READY</span></div>
+      <div class="planline"><div class="pic">${ic('spark',16)}</div><div><div class="pt">Monitoring ${nTypes} incident types on your path</div><div class="ps">Interrupts you for ${thL}</div></div><span class="tag">LIVE</span></div>
+      <div class="planline"><div class="pic">${ic('users',16)}</div><div><div class="pt">Sharing with ${names}</div><div class="ps">Live location + ETA${ciL}</div></div><span class="tag">ON</span></div>
       <div style="height:12px"></div>
       <button class="btn btn-blue" onclick="startWalk()">${ic('shield',18)} Start — I'm walking now</button>
       <div style="height:8px"></div>
-      <button class="btn btn-ghost" onclick="renderIdle()">Back</button>
+      <button class="btn btn-ghost" onclick="openFilters()">Adjust filters</button>
     </div>`;
 }
 function activeSheet(){
@@ -427,12 +473,12 @@ function activeSheet(){
       <div class="mini">
         <div class="m"><div class="v">${pct}%</div><div class="k">of route</div></div>
         <div class="m"><div class="v">3</div><div class="k">watched</div></div>
-        <div class="m"><div class="v">2</div><div class="k">guardians</div></div>
+        <div class="m"><div class="v">${CFG.contacts.length||0}</div><div class="k">guardians</div></div>
       </div>
       <div style="height:12px"></div>
       <div class="row2">
-        <button class="btn btn-ghost" onclick="toast('Called Mom')">${ic('phone',16)} Contact</button>
-        <button class="btn btn-red" onclick="toast('Sharing SOS with your network + 911')">${ic('alert',16)} SOS</button>
+        <button class="btn btn-ghost" onclick="checkinOK()">${ic('checkc',16)} Check in</button>
+        <button class="btn btn-red" onclick="openSOS()">${ic('alert',16)} SOS</button>
       </div>
     </div>`;
 }
@@ -447,12 +493,16 @@ function arrivedSheet(){
 
 /* ---------- walk loop ---------- */
 function startWalk(){
-  S.phase='active'; S.intervened=false; S.rerouted=false;
+  S.phase='active'; S.intervened=false; S.rerouted=false; S.checkinShown=false;
   document.getElementById('hdrTitle').textContent='Guardian';
+  const names=CFG.contacts.length?CFG.contacts.join(' · '):'your Safety Network';
+  const avs=(CFG.contacts.length?CFG.contacts:['Guardian']).slice(0,3).map(function(n,i){return '<span class="av"'+(i?' style="background:#5c4310"':'')+'>'+n[0]+'</span>';}).join('');
+  document.getElementById('watchers').innerHTML='<div class="avs">'+avs+'</div> Sharing live with '+names;
   document.getElementById('watchers').classList.add('show');
   document.getElementById('restart').classList.add('show');
   document.getElementById('clock').classList.add('sim');
   activeSheet();
+  if(sb){ subscribeIncidents(); publishSession(); }
   S.timer=setInterval(tick,600);
 }
 function tick(){
@@ -470,6 +520,7 @@ function tick(){
     if(sb){ if(pct>=0.72) triggerIntervention(S.scriptInc); }
     else if(pct>=0.36){ triggerIntervention(S.scriptInc); }
   }
+  maybeCheckin();
   publishSession();
 }
 
@@ -516,7 +567,7 @@ function detourFrom(pos,dest,inc){
 function reroute(){
   document.getElementById('interv').classList.remove('show');
   S.rerouted=true;
-  const det=detourFrom(S.pos,S.dest,S.scriptInc);
+  const det=detourFrom(S.pos,S.dest,S.activeInc||S.scriptInc);
   if(S.layers.detour)S.map.removeLayer(S.layers.detour);
   S.layers.detour=L.polyline(det,{color:'#30d158',weight:6,opacity:.95}).addTo(S.map);
   // dim old route
@@ -553,6 +604,32 @@ function switchTab(name){
   if(!onMap){ const el=document.getElementById('scr-'+name); el.classList.add('show'); el.scrollTop=0; }
 }
 
+/* ---------- Supabase live sync ---------- */
+async function publishSession(){
+  if(!sb) return;
+  try{
+    const remaining=haversine(S.pos,S.dest), remMin=Math.max(0,Math.round(remaining/15));
+    await sb.from('walk_sessions').upsert(
+      {code:SESSION_CODE,lat:S.pos[0],lng:S.pos[1],eta:fmtClock(S.simMin+remMin),status:S.phase,updated_at:new Date().toISOString()},
+      {onConflict:'code'});
+  }catch(e){}
+}
+function subscribeIncidents(){
+  if(!sb) return;
+  sb.channel('live-incidents').on('postgres_changes',
+    {event:'INSERT',schema:'public',table:'incidents'},
+    payload=>onLiveIncident(payload.new)).subscribe();
+}
+function onLiveIncident(row){
+  if(S.phase!=='active' || S.intervened) return;
+  // place the injected incident ahead on the current route so it's genuinely on-path
+  const ai=Math.min(S.route.length-1, S.idx+12), base=S.route[ai];
+  const inc={ll:[base[0]+0.0002, base[1]+0.0001], sev:(row.severity||'high'), icon:'alert',
+    type:row.type||'Police activity', cred:row.credibility||'confirmed', mins:row.mins||1,
+    conf:row.confirmations||6, street:row.street||'44th Dr'};
+  triggerIntervention(inc);
+}
+
 /* ---------- toast ---------- */
 let toastT=null;
 function toast(msg){const t=document.getElementById('toast');t.innerHTML=ic('checkc',14)+' '+msg;t.classList.add('show');
@@ -573,11 +650,120 @@ function resetDemo(){
   buildScenario(); drawBase(); renderIdle();
 }
 
+/* ===== config / onboarding / filters / check-in / SOS ===== */
+function cfgDefaults(){return {onboarded:false,contacts:[],home:'67-83 223rd Pl',
+  filters:{types:{violent:true,police:true,fire:true,suspicious:true,crowds:false,traffic:false},threshold:'serious',radius:'block'},
+  checkin:5};}
+let CFG=cfgDefaults();
+function loadCfg(){try{const j=localStorage.getItem('guardianCfg');if(j)CFG=Object.assign(cfgDefaults(),JSON.parse(j));}catch(e){}}
+function saveCfg(){try{localStorage.setItem('guardianCfg',JSON.stringify(CFG));}catch(e){}}
+
+const OB_STEPS=5;
+function startOnboard(){document.getElementById('onboard').classList.add('show');renderOnboard(1);}
+function closeOnboard(){CFG.onboarded=true;saveCfg();document.getElementById('onboard').classList.remove('show');}
+function skipOnboard(){if(CFG.contacts.length===0)CFG.contacts=['Mom','Alex'];closeOnboard();toast('Set up with defaults — change anytime in Filters');}
+function renderOnboard(step){
+  const prog=Array.from({length:OB_STEPS},function(_,i){return '<i class="'+(i<step?'on':'')+'"></i>';}).join('');
+  let body='',foot='';
+  if(step===1){
+    body='<div class="ob-hero">'+ic('shield',26)+'</div><h2>Meet Guardian</h2>'+
+      '<p class="sub">One tap watches your whole walk — it picks the safest route, shares your live location with people you trust, and warns you about incidents on your path before they reach you. Let\'s set it up (takes a minute).</p>';
+    foot='<button class="btn btn-blue" onclick="renderOnboard(2)">Get started</button>';
+  } else if(step===2){
+    const preset=['Mom','Dad','Alex','Partner','Roommate'];
+    const chips=preset.map(function(n){return '<span class="addchip '+(CFG.contacts.indexOf(n)>=0?'sel':'')+'" onclick="toggleContact(\''+n+'\',this)">'+ic('users',14)+' '+n+'</span>';}).join('');
+    body='<div class="ob-hero">'+ic('users',26)+'</div><h2>Who should look out for you?</h2>'+
+      '<p class="sub">Your Safety Network sees your live location and ETA while you walk, and is alerted automatically if you stop, go off route, miss a check-in, or hit SOS. Add a few people — they get a text with a link.</p>'+
+      '<div>'+chips+'</div>'+
+      '<div class="infobox">Add or remove anyone anytime. They only see your location while a walk is active.</div>';
+    foot='<button class="btn btn-blue" onclick="renderOnboard(3)">Next</button>';
+  } else if(step===3){
+    body='<div class="ob-hero">'+ic('home',26)+'</div><h2>Where\'s home?</h2>'+
+      '<p class="sub">Set your home address so Guardian can route you there and offer to protect the walk automatically when it\'s late.</p>'+
+      '<input class="field" id="obHome" value="'+(CFG.home||'')+'" placeholder="Home address">'+
+      '<button class="btn btn-ghost" onclick="useHere()">'+ic('pin',16)+' Use my current location</button>';
+    foot='<button class="btn btn-blue" onclick="CFG.home=document.getElementById(\'obHome\').value;renderOnboard(4)">Next</button>';
+  } else if(step===4){
+    body='<div class="ob-hero">'+ic('sliders',26)+'</div><h2>What should Guardian watch for?</h2>'+
+      '<p class="sub">This is your monitoring policy — it decides what\'s worth interrupting you for. Guardian stays silent for everything else.</p>'+filterControlsHTML();
+    foot='<button class="btn btn-blue" onclick="renderOnboard(5)">Next</button>';
+  } else {
+    body='<div class="ob-hero">'+ic('checkc',26)+'</div><h2>Two permissions & you\'re set</h2>'+
+      '<p class="sub">Guardian needs your location to route and share it, and notifications so it can reach you (and warn your contacts) even in your pocket.</p>'+
+      '<button class="btn btn-ghost" onclick="askLoc(this)">'+ic('pin',16)+' Enable location</button><div style="height:10px"></div>'+
+      '<button class="btn btn-ghost" onclick="askNotif(this)">'+ic('bell',16)+' Enable notifications</button>'+
+      '<div class="infobox" style="margin-top:14px">Nothing is shared automatically. Your location goes to your Safety Network only during an active walk, and SOS / 911 is only ever triggered by you.</div>';
+    foot='<button class="btn btn-blue" onclick="closeOnboard()">Finish — Guardian is ready</button>';
+  }
+  document.getElementById('onboard').innerHTML=
+    '<div class="ob-top"><div class="ob-prog">'+prog+'</div><button class="ob-skip" onclick="skipOnboard()">Skip</button></div>'+
+    '<div class="ob-body">'+body+'</div><div class="ob-foot">'+foot+'</div>';
+}
+function toggleContact(n,el){const i=CFG.contacts.indexOf(n);if(i>=0)CFG.contacts.splice(i,1);else CFG.contacts.push(n);el.classList.toggle('sel');}
+function useHere(){if(navigator.geolocation)navigator.geolocation.getCurrentPosition(function(){document.getElementById('obHome').value='Current location';},function(){});}
+function askLoc(b){if(navigator.geolocation)navigator.geolocation.getCurrentPosition(function(){b.innerHTML=ic('check',16)+' Location enabled';b.style.color='#5fe39a';},function(){b.textContent='Location blocked — enable in browser';});}
+function askNotif(b){try{if('Notification' in window)Notification.requestPermission().then(function(p){b.innerHTML=ic('check',16)+' Notifications '+(p==='granted'?'enabled':p);b.style.color='#5fe39a';});}catch(e){}}
+
+function filterControlsHTML(){
+  const t=CFG.filters.types;
+  const row=function(k,label,desc){return '<div class="swrow"><div style="flex:1"><div class="st">'+label+'</div><div class="ss">'+desc+'</div></div><div class="sw '+(t[k]?'on':'')+'" onclick="togType(\''+k+'\',this)"></div></div>';};
+  const seg=function(field,opts){return '<div class="seg2">'+opts.map(function(o){return '<button class="'+(CFG.filters[field]===o[0]?'on':'')+'" onclick="setF(\''+field+'\',\''+o[0]+'\',this)">'+o[1]+'</button>';}).join('')+'</div>';};
+  const ci=function(v,l){return '<button class="'+(CFG.checkin===v?'on':'')+'" onclick="setCI('+v+',this)">'+l+'</button>';};
+  return row('violent','Violent / weapons','Assaults, shootings, stabbings')+
+    row('police','Police activity','Active police scenes')+
+    row('fire','Fire / EMS','Fires, medical, hazards')+
+    row('suspicious','Suspicious person / harassment','Following, harassment reports')+
+    row('crowds','Crowds / unrest','Protests, large gatherings')+
+    row('traffic','Traffic hazards','For biking / crossing')+
+    '<div class="sec">Interrupt me for</div>'+seg('threshold',[['serious','Only serious on my path'],['medium','Medium & up'],['all','Everything']])+
+    '<div class="sec">Watch radius</div>'+seg('radius',[['block','1 block'],['quarter','0.25 mi'],['half','0.5 mi']])+
+    '<div class="sec">Safety check-in</div>'+
+    '<p style="color:#969aa3;font-size:12px;line-height:1.5;margin:0 0 8px">Guardian asks you to tap "I\'m OK" on a timer. Miss it, and it alerts your contacts with your location and nearby risk.</p>'+
+    '<div class="seg2">'+ci(0,'Off')+ci(5,'5 min')+ci(10,'10 min')+ci(15,'15 min')+'</div>';
+}
+function togType(k,el){CFG.filters.types[k]=!CFG.filters.types[k];el.classList.toggle('on');}
+function setF(field,v,el){CFG.filters[field]=v;el.parentElement.querySelectorAll('button').forEach(function(b){b.classList.remove('on');});el.classList.add('on');}
+function setCI(v,el){CFG.checkin=v;el.parentElement.querySelectorAll('button').forEach(function(b){b.classList.remove('on');});el.classList.add('on');}
+function openFilters(){var f=document.getElementById('filtersScreen');f.classList.add('show');
+  f.innerHTML='<div class="ob-top"><div class="ob-prog"></div><button class="ob-skip" onclick="closeFilters()">Done</button></div>'+
+  '<div class="ob-body"><h2>Filters &amp; safety</h2><p class="sub">What Guardian monitors, when it interrupts you, and your check-in timer.</p>'+filterControlsHTML()+'</div>'+
+  '<div class="ob-foot"><button class="btn btn-blue" onclick="closeFilters()">Save</button></div>';}
+function closeFilters(){saveCfg();document.getElementById('filtersScreen').classList.remove('show');}
+
+/* check-in during a walk */
+let ciTimer=null, ciLeft=0;
+function maybeCheckin(){ if(!CFG.checkin||S.checkinShown||S.phase!=='active')return; if(S.idx>=8){S.checkinShown=true;showCheckin();} }
+function showCheckin(){ ciLeft=12; const el=document.getElementById('checkin'); el.classList.add('show');
+  const paint=function(){ el.innerHTML='<div style="background:#14110a;border:1px solid #5c4310;border-radius:16px;padding:14px 15px;box-shadow:0 14px 34px rgba(0,0,0,.5)">'+
+    '<div style="display:flex;align-items:center;gap:8px;color:#ffcf80;font-size:12px;font-weight:700"><span style="width:9px;height:9px;border-radius:50%;background:#e0a52a;display:inline-block"></span> SAFETY CHECK-IN</div>'+
+    '<div style="font-size:15px;font-weight:700;margin:7px 0 3px">Still doing OK?</div>'+
+    '<div style="font-size:12.5px;color:#c9bfa0;line-height:1.4">Tap to confirm. No response in <b>'+ciLeft+'s</b> and I\'ll alert '+(CFG.contacts.slice(0,2).join(' &amp; ')||'your contacts')+' with your location + nearby risk.</div>'+
+    '<button class="btn btn-blue" style="margin-top:11px" onclick="checkinOK()">'+ic('checkc',16)+' I\'m OK</button></div>'; };
+  paint(); clearInterval(ciTimer);
+  ciTimer=setInterval(function(){ ciLeft--; if(ciLeft<=0){clearInterval(ciTimer);checkinMissed();} else paint(); },800);
+}
+function checkinOK(){clearInterval(ciTimer);document.getElementById('checkin').classList.remove('show');toast('Checked in — '+(CFG.contacts.slice(0,2).join(' & ')||'your contacts')+' notified you\'re safe');}
+function checkinMissed(){document.getElementById('checkin').classList.remove('show');toast('No check-in — alerting your contacts with your location + nearby risk');if(sb){try{sb.from('walk_sessions').update({status:'overdue'}).eq('code',SESSION_CODE);}catch(e){}}}
+
+/* SOS — manual only */
+function openSOS(){var m=document.getElementById('sosModal');m.classList.add('show');
+  m.innerHTML='<div style="background:#0d0e13;width:100%;border-radius:24px 24px 0 0;border-top:1px solid #23262e;padding:18px 18px calc(20px + env(safe-area-inset-bottom))">'+
+    '<div style="width:38px;height:5px;border-radius:3px;background:#2d3038;margin:2px auto 14px"></div>'+
+    '<div style="width:52px;height:52px;border-radius:15px;background:#2a0f0c;border:1px solid #5c1f18;color:#ff8078;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">'+ic('alert',24)+'</div>'+
+    '<h3 style="text-align:center;margin:0 0 6px;font-size:20px;font-weight:700">Send SOS?</h3>'+
+    '<p style="text-align:center;color:#a4a9b2;font-size:13.5px;line-height:1.5;margin:0 0 16px">This shares your live location with your Safety Network and 911. Guardian never does this automatically — only you can send it.</p>'+
+    '<button class="btn btn-red" onclick="sendSOS()">'+ic('phone',17)+' Send SOS now</button><div style="height:9px"></div>'+
+    '<button class="btn btn-ghost" onclick="closeSOS()">Cancel</button></div>';}
+function closeSOS(){document.getElementById('sosModal').classList.remove('show');}
+function sendSOS(){closeSOS();toast('SOS sent — location shared with your contacts + 911');if(sb){try{sb.from('walk_sessions').update({status:'sos'}).eq('code',SESSION_CODE);}catch(e){}}}
+
 /* ---------- boot ---------- */
 function boot(center,fromReal){
+  loadCfg();
   S.start=center;
   initMap(center);
   buildScenario(); drawBase(); renderIdle();
+  if(!CFG.onboarded){ startOnboard(); }
   if(!fromReal){
     const b=document.getElementById('banner');
     b.innerHTML=ic('pin',14)+' Using a demo location (New York). Allow location, or run over https/localhost, to center on you.';
