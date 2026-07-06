@@ -255,8 +255,8 @@
   <button class="restart" id="restart" onclick="resetDemo()"><svg class="ic" style="font-size:13px"><use href="#g-refresh"/></svg> Restart demo</button>
   <div class="banner" id="banner"></div>
 
-  <div class="watchers" id="watchers">
-    <div class="avs"><span class="av">M</span><span class="av" style="background:#5c4310">A</span></div> Sharing live with Mom · Alex
+  <div class="watchers" id="watchers" onclick="shareLink()" style="cursor:pointer" title="Tap to invite more people">
+    <div class="avs"><span class="av">·</span></div> No one watching yet
   </div>
 
   <div class="toast" id="toast"></div>
@@ -897,7 +897,8 @@ function subscribeWatchers(){ if(!sb||!S.code) return;
   if(S.wCh){ try{sb.removeChannel(S.wCh);}catch(e){} }
   S.wCh=sb.channel('watchers:'+S.code).on('postgres_changes',
     {event:'INSERT',schema:'public',table:'watchers',filter:'code=eq.'+S.code},
-    function(p){ S.watchers.push((p.new&&p.new.name)||'Guest'); renderWatchers(); }).subscribe(); }
+    function(p){ const nm=(p.new&&p.new.name)||'Someone'; S.watchers.push(nm); renderWatchers();
+      toast(nm+' joined — now watching you'); }).subscribe(); }
 function renderWatchers(){ const el=document.getElementById('watcherList');
   if(el){ if(!S.watchers||!S.watchers.length){ el.innerHTML='<div class="wempty">Waiting for people to join… share the link above.</div>'; }
     else { el.innerHTML=S.watchers.map(function(n){ return '<div class="wrow"><span class="wav">'+((n[0]||'G').toUpperCase())+'</span><span style="flex:1">'+n+'</span><span class="wjoined">joined</span></div>'; }).join(''); } }
