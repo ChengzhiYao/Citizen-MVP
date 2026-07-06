@@ -542,7 +542,7 @@ function activeSheet(){
       <div class="mini">
         <div class="m"><div class="v">${pct}%</div><div class="k">of route</div></div>
         <div class="m"><div class="v" style="${S.avoided?'color:#5fe39a':''}">${S.avoided||0}</div><div class="k">dangers avoided</div></div>
-        <div class="m"><div class="v">${CFG.contacts.length||0}</div><div class="k">watching you</div></div>
+        <div class="m"><div class="v" id="watchCount">${(S.watchers&&S.watchers.length)||0}</div><div class="k">watching you</div></div>
       </div>
       <div style="height:12px"></div>
       <div class="row2">
@@ -578,14 +578,13 @@ function startWalk(){
     detail:'Your path passes a registered address from the public registry. Not an active incident, and shown without any names.',
     why:'You turned on registered-address routing in Settings', off:[-0.00014,0.00016]});
   document.getElementById('hdrTitle').textContent='Guardian';
-  const names=CFG.contacts.length?CFG.contacts.join(' · '):'your Safety Network';
-  const avs=(CFG.contacts.length?CFG.contacts:['Guardian']).slice(0,3).map(function(n,i){return '<span class="av"'+(i?' style="background:#5c4310"':'')+'>'+n[0]+'</span>';}).join('');
-  document.getElementById('watchers').innerHTML='<div class="avs">'+avs+'</div> Sharing live with '+names;
   document.getElementById('watchers').classList.add('show');
+  updateWatcherUI();
   document.getElementById('restart').classList.add('show');
   document.getElementById('clock').classList.add('sim');
   activeSheet();
-  if(sb){ subscribeIncidents(); publishSession(); }
+  S.note='Walk started — heading to '+(S.destName||'home')+'.';
+  if(sb){ subscribeIncidents(); publishRoute(); publishSession(); logEvent('start', S.note); }
   S.timer=setInterval(tick,600);
 }
 function tick(){
@@ -647,6 +646,8 @@ function triggerIntervention(inc){
     '<div style="height:8px"></div>'+
     '<button class="btn btn-ghost" onclick="keepGoing()">Keep my route</button>';
   document.getElementById('interv').classList.add('show');
+  setNote('⚠ Incident on the path — '+head+'. Guardian flagged it; deciding whether to reroute.');
+  logEvent('incident', head+' detected on the path ('+dist+' m ahead).');
   if(aiblk) aiSummarize(inc, dist);
 }
 async function aiSummarize(inc, dist){
@@ -682,18 +683,24 @@ async function reroute(){
   S.layers.route.setStyle({color:'#3a3f48',opacity:.5,dashArray:'2 8'});
   S.route=det; S.idx=0; S.pos=S.route[0];
   S.phase='active';
+  setNote('✓ Rerouted around the hazard — back on a safer street.');
+  logEvent('reroute','Rerouted around the hazard onto a safer street (+~2 min).');
+  publishRoute();
   toast('Rerouted — Guardian is watching the new path');
   activeSheet();
 }
 function keepGoing(){
   document.getElementById('interv').classList.remove('show');
   S.phase='active';
+  logEvent('continue','Chose to continue past the incident — staying alert.');
+  setNote('Chose to continue past the incident — staying alert.');
   toast('Staying on route — heads up, you\'ll pass the incident. Stay alert.');
   activeSheet();
 }
 function arrive(){
   clearInterval(S.timer);
   S.phase='arrived';
+  setNote('Arrived safely.'); logEvent('arrive','Arrived safely — Guardian ended.');
   document.getElementById('watchers').classList.remove('show');
   document.getElementById('clock').classList.remove('sim');
   document.getElementById('clock').querySelector('.dot').style.background='var(--green)';
@@ -717,10 +724,13 @@ async function publishSession(){
   try{
     const remaining=haversine(S.pos,S.dest), remMin=Math.max(0,Math.round(remaining/15));
     await sb.from('walk_sessions').upsert(
-      {code:sessCode(),lat:S.pos[0],lng:S.pos[1],eta:fmtClock(S.simMin+remMin),status:S.phase,updated_at:new Date().toISOString()},
+      {code:sessCode(),lat:S.pos[0],lng:S.pos[1],eta:fmtClock(S.simMin+remMin),status:S.phase,note:S.note||null,updated_at:new Date().toISOString()},
       {onConflict:'code'});
   }catch(e){}
 }
+function setNote(t){ S.note=t; publishSession(); }
+async function publishRoute(){ if(!sb) return; try{ await sb.from('walk_sessions').update({route:S.route}).eq('code',sessCode()); }catch(e){} }
+async function logEvent(kind,text){ if(!sb) return; try{ await sb.from('walk_events').insert({code:sessCode(),kind:kind,text:text}); }catch(e){} }
 function subscribeIncidents(){
   if(!sb) return;
   sb.channel('live-incidents').on('postgres_changes',
@@ -863,8 +873,8 @@ function showShare(){
   const url=location.origin+'/watch.html?s='+S.code;
   document.getElementById('sheet').innerHTML=
     '<div class="panel">'+
-      '<h2>Invite your circle</h2>'+
-      '<p class="lede">Send this link to people you trust — they can watch your walk live until you\'re home. They see your location only while you\'re walking.</p>'+
+      '<h2>Ask someone to watch over you</h2>'+
+      '<p class="lede">Send this link to someone you trust. It tells them you want them to keep an eye on you — they\'ll see your live location, your route and any incidents until you\'re home, and get alerted if you miss a check-in or hit SOS. They only see it while you\'re walking.</p>'+
       '<div class="sharebox"><span class="url" id="shareUrl">'+url+'</span><button class="btn-mini" onclick="copyShare()">'+ic('checkc',13)+' Copy</button></div>'+
       '<button class="btn btn-ghost" style="margin-top:10px" onclick="shareLink()">'+ic('share',16)+' Share link…</button>'+
       '<div class="sec">Who\'s watching</div>'+
@@ -875,9 +885,11 @@ function showShare(){
     '</div>';
   S.watchers=[]; renderWatchers(); loadWatchers(); subscribeWatchers();
 }
-function copyShare(){ const u=(document.getElementById('shareUrl')||{}).textContent||''; try{ navigator.clipboard.writeText(u); toast('Link copied — send it to your circle'); }catch(e){ toast('Long-press the link to copy'); } }
+function inviteText(){ return "Hey — I'm walking home and I'd feel safer if you kept an eye on me. This link shows my live location, my route and any incidents until I'm home, and alerts you if I miss a check-in or need help. Thanks for looking out for me 💙"; }
+function copyShare(){ const u=location.origin+'/watch.html?s='+S.code;
+  try{ navigator.clipboard.writeText(inviteText()+'\n'+u); toast('Invite + link copied — paste it to your person'); }catch(e){ toast('Long-press the link to copy'); } }
 function shareLink(){ const u=location.origin+'/watch.html?s='+S.code;
-  if(navigator.share){ navigator.share({title:'Watch my walk — Citizen Guardian', text:'Follow me live until I get home:', url:u}).catch(function(){}); }
+  if(navigator.share){ navigator.share({title:'Watch over my walk home', text:inviteText(), url:u}).catch(function(){}); }
   else { copyShare(); } }
 async function loadWatchers(){ if(!sb||!S.code) return;
   try{ const q=await sb.from('watchers').select('name,joined_at').eq('code',S.code).order('joined_at'); S.watchers=(q.data||[]).map(function(w){return w.name||'Guest';}); renderWatchers(); }catch(e){} }
@@ -886,9 +898,22 @@ function subscribeWatchers(){ if(!sb||!S.code) return;
   S.wCh=sb.channel('watchers:'+S.code).on('postgres_changes',
     {event:'INSERT',schema:'public',table:'watchers',filter:'code=eq.'+S.code},
     function(p){ S.watchers.push((p.new&&p.new.name)||'Guest'); renderWatchers(); }).subscribe(); }
-function renderWatchers(){ const el=document.getElementById('watcherList'); if(!el) return;
-  if(!S.watchers||!S.watchers.length){ el.innerHTML='<div class="wempty">Waiting for people to join… share the link above.</div>'; return; }
-  el.innerHTML=S.watchers.map(function(n){ return '<div class="wrow"><span class="wav">'+((n[0]||'G').toUpperCase())+'</span><span style="flex:1">'+n+'</span><span class="wjoined">joined</span></div>'; }).join(''); }
+function renderWatchers(){ const el=document.getElementById('watcherList');
+  if(el){ if(!S.watchers||!S.watchers.length){ el.innerHTML='<div class="wempty">Waiting for people to join… share the link above.</div>'; }
+    else { el.innerHTML=S.watchers.map(function(n){ return '<div class="wrow"><span class="wav">'+((n[0]||'G').toUpperCase())+'</span><span style="flex:1">'+n+'</span><span class="wjoined">joined</span></div>'; }).join(''); } }
+  updateWatcherUI(); }
+function updateWatcherUI(){
+  const names=(S.watchers&&S.watchers.length)?S.watchers:[];
+  const chip=document.getElementById('watchers');
+  if(chip){
+    if(names.length){
+      const avs=names.slice(0,3).map(function(n,i){return '<span class="av"'+(i?' style="background:#5c4310"':'')+'>'+((n[0]||'G').toUpperCase())+'</span>';}).join('');
+      const label=names.length<=2?('Sharing live with '+names.join(' · ')):('Sharing live · '+names.length+' watching');
+      chip.innerHTML='<div class="avs">'+avs+'</div> '+label;
+    } else { chip.innerHTML='<div class="avs"><span class="av">·</span></div> No one watching yet'; }
+  }
+  const stat=document.getElementById('watchCount'); if(stat) stat.textContent=names.length;
+}
 
 /* ===== config / onboarding / filters / check-in / SOS ===== */
 function cfgDefaults(){return {onboarded:false,contacts:['Mom','Alex'],home:'67-83 223rd Pl',
@@ -1005,7 +1030,7 @@ function showCheckin(){ ciLeft=12; const el=document.getElementById('checkin'); 
   ciTimer=setInterval(function(){ ciLeft--; if(ciLeft<=0){clearInterval(ciTimer);checkinMissed();} else paint(); },800);
 }
 function checkinOK(){clearInterval(ciTimer);document.getElementById('checkin').classList.remove('show');toast('Checked in — '+(CFG.contacts.slice(0,2).join(' & ')||'your contacts')+' notified you\'re safe');}
-function checkinMissed(){document.getElementById('checkin').classList.remove('show');toast('No check-in — alerting your contacts with your location + nearby risk');if(sb){try{sb.from('walk_sessions').update({status:'overdue'}).eq('code',sessCode());}catch(e){}}}
+function checkinMissed(){document.getElementById('checkin').classList.remove('show');toast('No check-in — alerting your contacts with your location + nearby risk');setNote('Missed a safety check-in — contacts alerted.');logEvent('checkin','Missed a safety check-in — contacts alerted with location + nearby risk.');if(sb){try{sb.from('walk_sessions').update({status:'overdue'}).eq('code',sessCode());}catch(e){}}}
 
 /* SOS — manual only */
 function openSOS(){var m=document.getElementById('sosModal');m.classList.add('show');
@@ -1017,7 +1042,7 @@ function openSOS(){var m=document.getElementById('sosModal');m.classList.add('sh
     '<button class="btn btn-red" onclick="sendSOS()">'+ic('phone',17)+' Send SOS now</button><div style="height:9px"></div>'+
     '<button class="btn btn-ghost" onclick="closeSOS()">Cancel</button></div>';}
 function closeSOS(){document.getElementById('sosModal').classList.remove('show');}
-function sendSOS(){closeSOS();toast('SOS sent — location shared with your contacts + 911');if(sb){try{sb.from('walk_sessions').update({status:'sos'}).eq('code',sessCode());}catch(e){}}}
+function sendSOS(){closeSOS();toast('SOS sent — location shared with your contacts + 911');setNote('SOS sent — location shared with contacts + 911.');logEvent('sos','SOS sent by Jess — location shared with contacts + 911.');if(sb){try{sb.from('walk_sessions').update({status:'sos'}).eq('code',sessCode());}catch(e){}}}
 
 /* ---------- boot ---------- */
 async function boot(center,fromReal){

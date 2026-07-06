@@ -30,9 +30,42 @@
   .note{color:#7c818b;font-size:11.5px;line-height:1.5;margin:10px 2px 0;text-align:center}
   .meMk{width:20px;height:20px;border-radius:50%;background:#2f6bff;border:3px solid #fff;box-shadow:0 0 0 7px rgba(47,107,255,.25)}
   .ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.14em}
+  .wnote{background:#241803;border:1px solid #5c4310;color:#ffcf80;border-radius:12px;padding:10px 12px;font-size:12.5px;line-height:1.4;margin-bottom:12px}
+  .wnote.ok{background:#0d2016;border-color:#1f5234;color:#7fe6a8}
+  .feedhead{font-size:10.5px;color:#7c818b;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin:2px 2px 8px}
+  .feed{max-height:150px;overflow-y:auto;margin-bottom:12px}
+  .fempty{color:#7c818b;font-size:12px;padding:8px 2px}
+  .fitem{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #15171d}
+  .fitem:last-child{border-bottom:none}
+  .fdot{width:8px;height:8px;border-radius:50%;flex:0 0 8px;margin-top:5px;background:#6b7280}
+  .fdot.incident,.fdot.sos{background:#ff453a}.fdot.reroute,.fdot.arrive{background:#30d158}.fdot.continue,.fdot.checkin{background:#e0a52a}.fdot.start{background:#2f6bff}
+  .ftext{flex:1;font-size:12.5px;line-height:1.4}
+  .ftime{color:#6f747d;font-size:10.5px;margin-top:2px}
+  .intro{position:absolute;inset:0;z-index:60;background:rgba(0,0,0,.93);display:flex;align-items:center;justify-content:center;padding:20px}
+  .introcard{max-width:430px;width:100%;background:#0d0e13;border:1px solid #23262e;border-radius:22px;padding:22px}
+  .introcard .ii{width:52px;height:52px;border-radius:15px;background:#0c0f1c;border:1px solid #24407a;color:#8fb4ff;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+  .introcard h2{font-size:20px;font-weight:700;margin:0 0 8px;line-height:1.25}
+  .introcard p{color:#a4a9b2;font-size:13.5px;line-height:1.5;margin:0 0 12px}
+  .introcard ul{margin:0 0 12px;padding-left:18px;color:#cfd3da;font-size:13px;line-height:1.7}
+  .introcard .mut{color:#7c818b;font-size:12px}
+  .introcard button{width:100%;border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:700;background:#2f6bff;color:#fff;cursor:pointer;font-family:inherit;margin-top:6px}
 </style>
 </head>
 <body>
+<div class="intro" id="intro">
+  <div class="introcard">
+    <div class="ii"><svg class="ic" style="font-size:24px" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+    <h2>Jess asked you to watch over her walk home</h2>
+    <p>She wants someone she trusts to keep an eye on her until she's safely home. On this screen you'll see:</p>
+    <ul>
+      <li>Her <b>live location</b> and the <b>route</b> she's walking</li>
+      <li>Any <b>incidents</b> on her path — and whether she rerouted or kept going</li>
+      <li>An <b>alert</b> if she misses a safety check-in or hits SOS</li>
+    </ul>
+    <p class="mut">You only see this while she's walking. Thanks for looking out for her.</p>
+    <button onclick="closeIntro()">Got it — I'll watch out for her</button>
+  </div>
+</div>
 <div id="map"></div>
 <div class="top">
   <div class="t"><svg class="ic" style="font-size:17px" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Watching Jess</div>
@@ -40,7 +73,10 @@
 </div>
 <div class="sheet">
   <div class="card">
-    <div class="row"><span class="dot" id="wdot"></span><div><div class="st" id="wst">Waiting for Jess to start Guardian…</div><div class="ss" id="wss">You'll see her live location here</div></div><span class="eta" id="weta" style="display:none"></span></div>
+    <div class="row"><span class="dot" id="wdot"></span><div><div class="st" id="wst">Waiting for Jess to start Guardian…</div><div class="ss" id="wss">You'll see her live location + route here</div></div><span class="eta" id="weta" style="display:none"></span></div>
+    <div id="wnote" class="wnote" style="display:none"></div>
+    <div class="feedhead">Activity &amp; route history</div>
+    <div id="feed" class="feed"><div class="fempty">No events yet — Jess is on the way.</div></div>
     <button class="btn" id="inject" onclick="inject()" disabled>
       <svg class="ic" style="font-size:16px" viewBox="0 0 24 24"><path d="M10.3 3.9 2 18a2 2 0 0 0 1.7 3h16.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
       Inject incident ahead (demo)
@@ -59,16 +95,27 @@ const sb=window.supabase.createClient(SUPA_URL,SUPA_ANON);
 
 let map=L.map('map',{zoomControl:false,attributionControl:false}).setView([40.7305,-73.7920],16);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:20}).addTo(map);
-let marker=null, last=null;
+function closeIntro(){ const i=document.getElementById('intro'); if(i) i.style.display='none'; joinAsWatcher(); }
+let marker=null, last=null, routeLine=null, routeKey='';
+function drawRoute(route){
+  if(!route || !Array.isArray(route) || !route.length) return;
+  const first=route[0], lastp=route[route.length-1];
+  const key=route.length+':'+(first&&first.join?first.join(','):'')+':'+(lastp&&lastp.join?lastp.join(','):'');
+  if(key===routeKey) return; routeKey=key;
+  if(routeLine) map.removeLayer(routeLine);
+  routeLine=L.polyline(route,{color:'#2f6bff',weight:5,opacity:.85}).addTo(map);
+}
 
-// register this watcher so the walker sees them join
-(async function joinAsWatcher(){
+// register this watcher (called after they read the intro & tap "Got it")
+let joined=false;
+async function joinAsWatcher(){
+  if(joined) return; joined=true;
   try{
     let nm=localStorage.getItem('watchName');
-    if(!nm){ nm=(window.prompt('Your name (so they know who\'s watching):','')||'Guest').slice(0,24); localStorage.setItem('watchName',nm); }
+    if(!nm){ nm=(window.prompt('Your name (so Jess knows who\'s watching):','')||'Guest').slice(0,24); localStorage.setItem('watchName',nm); }
     await sb.from('watchers').insert({code:CODE, name:nm});
   }catch(e){}
-})();
+}
 
 function render(s){
   if(!s || s.lat==null) return;
@@ -86,7 +133,25 @@ function render(s){
   document.getElementById('wss').textContent = arrived ? 'Guardian ended' : 'Live location · Guardian active';
   const eta=document.getElementById('weta');
   if(s.eta && !arrived){ eta.style.display=''; eta.textContent='ETA '+s.eta; } else eta.style.display='none';
+  const wn=document.getElementById('wnote');
+  if(wn){ if(s.note){ wn.style.display=''; wn.textContent=s.note; wn.className='wnote'+(/✓|arrived|safe/i.test(s.note)?' ok':''); } else wn.style.display='none'; }
+  drawRoute(s.route);
 }
+let events=[];
+function renderFeed(){
+  const el=document.getElementById('feed'); if(!el) return;
+  if(!events.length){ el.innerHTML='<div class="fempty">No events yet — Jess is on the way.</div>'; return; }
+  el.innerHTML=events.map(function(e){
+    const t=e.at?new Date(e.at):new Date();
+    const hh=t.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});
+    return '<div class="fitem"><span class="fdot '+(e.kind||'')+'"></span><div class="ftext">'+(e.text||'')+'<div class="ftime">'+hh+'</div></div></div>';
+  }).join('');
+}
+async function loadEvents(){ try{ const q=await sb.from('walk_events').select('*').eq('code',CODE).order('at',{ascending:false}).limit(40); events=q.data||[]; renderFeed(); }catch(e){} }
+sb.channel('watch-events').on('postgres_changes',
+  {event:'INSERT',schema:'public',table:'walk_events',filter:'code=eq.'+CODE},
+  function(p){ events.unshift(p.new); renderFeed(); }).subscribe();
+loadEvents(); setInterval(loadEvents,6000);
 
 async function load(){
   const {data}=await sb.from('walk_sessions').select('*').eq('code',CODE).maybeSingle();

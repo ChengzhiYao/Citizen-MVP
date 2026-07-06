@@ -53,3 +53,18 @@ alter publication supabase_realtime add table watchers;
 alter table watchers enable row level security;
 create policy "demo read watchers"   on watchers for select using (true);
 create policy "demo insert watchers" on watchers for insert with check (true);
+
+-- 6) live route + note on the session, and a walk_events feed for the watcher's history
+alter table walk_sessions add column if not exists route jsonb;
+alter table walk_sessions add column if not exists note text;
+create table if not exists walk_events (
+  id uuid primary key default gen_random_uuid(),
+  code text not null,
+  kind text,
+  text text,
+  at timestamptz not null default now()
+);
+alter publication supabase_realtime add table walk_events;
+alter table walk_events enable row level security;
+create policy "demo read events"   on walk_events for select using (true);
+create policy "demo insert events" on walk_events for insert with check (true);
