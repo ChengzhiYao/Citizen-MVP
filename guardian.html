@@ -110,6 +110,10 @@
   #sosModal{position:absolute;inset:0;z-index:80;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.6)}
   #sosModal.show{display:flex;animation:fade .2s}
   @keyframes fade{from{opacity:0}to{opacity:1}}
+  .ghint{display:flex;align-items:flex-start;gap:9px;background:#0f1622;border:1px solid #1d3050;border-radius:12px;padding:11px 12px;font-size:12px;color:#cfe0ff;line-height:1.45;margin:2px 0 12px}
+  .ghint .ic{font-size:15px;color:#8fb4ff;flex:0 0 auto;margin-top:1px}
+  .ghint b{color:#8fb4ff;cursor:pointer;white-space:nowrap;align-self:center;font-weight:600}
+  .tapedit{font-size:10.5px;color:#5f7fb8;margin-left:6px;font-weight:500}
   .clock{display:flex;align-items:center;gap:7px;background:rgba(18,20,26,.85);backdrop-filter:blur(10px);border:1px solid #2a2d36;
     border-radius:999px;padding:7px 13px;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
   .clock .dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
@@ -435,8 +439,9 @@ function renderIdle(){
         <div class="quick" onclick="toast('Safe Route — folded into Guardian')">${ic('nav',17)} Safe Route</div>
         <div class="quick" onclick="openFilters()">${ic('sliders',17)} Filters</div>
       </div>
+      ${hint('idlehint','New here? Guardian is already set up — just tap Start. You can change who it shares with or what it watches anytime (Filters, or on the next screen).')}
       <button class="btn btn-blue" onclick="showPlan()">${ic('shield',18)} Start Guardian</button>
-      <p style="color:#7c818b;font-size:11.5px;text-align:center;line-height:1.5;margin:10px 2px 0">One tap runs all three together — safest route + live escort + AI monitoring — instead of setting each up separately.</p>
+      <p style="color:#7c818b;font-size:11.5px;text-align:center;line-height:1.5;margin:10px 2px 0">One tap runs all three together — safest route + live escort + AI monitoring.</p>
     </div>`;
 }
 function showPlan(){
@@ -449,13 +454,14 @@ function showPlan(){
     <div class="panel">
       <h2>Your Guardian plan ${'<span class=\"aibadge\" style=\"vertical-align:2px\">'+ic('spark',12)+' AI</span>'}</h2>
       <p class="lede">Walking to ${CFG.home||'home'} · 0.6 mi · ETA ~12 min.</p>
-      <div class="planline"><div class="pic">${ic('nav',16)}</div><div><div class="pt">Safer route chosen</div><div class="ps">Avoids the higher-activity blocks on your usual way — tap during the walk to see why</div></div><span class="tag">READY</span></div>
-      <div class="planline"><div class="pic">${ic('spark',16)}</div><div><div class="pt">Monitoring ${nTypes} incident types on your path</div><div class="ps">Interrupts you for ${thL}</div></div><span class="tag">LIVE</span></div>
-      <div class="planline"><div class="pic">${ic('users',16)}</div><div><div class="pt">Sharing with ${names}</div><div class="ps">Live location + ETA${ciL}</div></div><span class="tag">ON</span></div>
+      ${hint('planhint','This is all pre-filled from your defaults — tap any row to change it. Nothing to set up first.')}
+      <div class="planline"><div class="pic">${ic('nav',16)}</div><div><div class="pt">Safer route chosen</div><div class="ps">Avoids higher-activity blocks — you'll see why en route</div></div><span class="tag">READY</span></div>
+      <div class="planline" onclick="openFilters()" style="cursor:pointer"><div class="pic">${ic('spark',16)}</div><div><div class="pt">Monitoring ${nTypes} incident types<span class="tapedit">tap to edit</span></div><div class="ps">Interrupts you for ${thL}</div></div><span class="tag">LIVE</span></div>
+      <div class="planline" onclick="openContacts()" style="cursor:pointer"><div class="pic">${ic('users',16)}</div><div><div class="pt">Sharing with ${names}<span class="tapedit">tap to edit</span></div><div class="ps">Live location + ETA${ciL}</div></div><span class="tag">ON</span></div>
       <div style="height:12px"></div>
       <button class="btn btn-blue" onclick="startWalk()">${ic('shield',18)} Start — I'm walking now</button>
       <div style="height:8px"></div>
-      <button class="btn btn-ghost" onclick="openFilters()">Adjust filters</button>
+      <button class="btn btn-ghost" onclick="renderIdle()">Back</button>
     </div>`;
 }
 function activeSheet(){
@@ -651,12 +657,28 @@ function resetDemo(){
 }
 
 /* ===== config / onboarding / filters / check-in / SOS ===== */
-function cfgDefaults(){return {onboarded:false,contacts:[],home:'67-83 223rd Pl',
+function cfgDefaults(){return {onboarded:false,contacts:['Mom','Alex'],home:'67-83 223rd Pl',
   filters:{types:{violent:true,police:true,fire:true,suspicious:true,crowds:false,traffic:false},threshold:'serious',radius:'block'},
   checkin:5};}
 let CFG=cfgDefaults();
 function loadCfg(){try{const j=localStorage.getItem('guardianCfg');if(j)CFG=Object.assign(cfgDefaults(),JSON.parse(j));}catch(e){}}
 function saveCfg(){try{localStorage.setItem('guardianCfg',JSON.stringify(CFG));}catch(e){}}
+
+/* lightweight just-in-time guidance (no forced pages) */
+function seen(id){try{return localStorage.getItem('g_seen_'+id)==='1';}catch(e){return false;}}
+function markSeen(id){try{localStorage.setItem('g_seen_'+id,'1');}catch(e){}}
+function dismissHint(id,el){markSeen(id);const h=el.closest('.ghint');if(h)h.style.display='none';}
+function hint(id,text){ if(seen(id))return ''; return '<div class="ghint">'+ic('spark',14)+' <span>'+text+'</span> <b onclick="dismissHint(\''+id+'\',this)">Got it</b></div>'; }
+
+/* on-demand contacts editor (opened contextually, not forced) */
+function openContacts(){var f=document.getElementById('filtersScreen');f.classList.add('show');
+  var preset=['Mom','Dad','Alex','Partner','Roommate'];
+  var chips=preset.map(function(n){return '<span class="addchip '+(CFG.contacts.indexOf(n)>=0?'sel':'')+'" onclick="toggleContact(\''+n+'\',this)">'+ic('users',14)+' '+n+'</span>';}).join('');
+  f.innerHTML='<div class="ob-top"><div class="ob-prog"></div><button class="ob-skip" onclick="closeContacts()">Done</button></div>'+
+    '<div class="ob-body"><h2>Who looks out for you</h2><p class="sub">They see your live location + ETA during a walk, and are alerted if you miss a check-in, go off route, or hit SOS.</p><div>'+chips+'</div>'+
+    '<div class="infobox">They only see your location while a walk is active.</div></div>'+
+    '<div class="ob-foot"><button class="btn btn-blue" onclick="closeContacts()">Save</button></div>';}
+function closeContacts(){saveCfg();document.getElementById('filtersScreen').classList.remove('show');if(S.phase==='plan')showPlan();}
 
 const OB_STEPS=5;
 function startOnboard(){document.getElementById('onboard').classList.add('show');renderOnboard(1);}
@@ -763,7 +785,6 @@ function boot(center,fromReal){
   S.start=center;
   initMap(center);
   buildScenario(); drawBase(); renderIdle();
-  if(!CFG.onboarded){ startOnboard(); }
   if(!fromReal){
     const b=document.getElementById('banner');
     b.innerHTML=ic('pin',14)+' Using a demo location (New York). Allow location, or run over https/localhost, to center on you.';
