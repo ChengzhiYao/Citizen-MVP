@@ -537,14 +537,26 @@ function arrivedSheet(){
   document.getElementById('sheet').innerHTML=`
     <div class="panel">
       <div class="statusbar"><span class="sdot green"></span><div><div class="st">You made it home</div><div class="ss">Arrived ${fmtClock(S.simMin)} · Guardian ended</div></div></div>
-      <p class="lede" style="margin:2px 0 12px">Mom and Alex were notified that you arrived safely. ${S.rerouted?'You avoided 1 active incident on the way.':''}</p>
+      <p class="lede" style="margin:2px 0 12px">${(CFG.contacts.slice(0,2).join(' and ')||'Your contacts')} were notified that you arrived safely. ${S.avoided?('Guardian rerouted you around '+S.avoided+' flagged location'+(S.avoided>1?'s':'')+' on the way.'):''}</p>
       <button class="btn btn-blue" onclick="resetDemo()">${ic('refresh',16)} Run the demo again</button>
     </div>`;
 }
 
 /* ---------- walk loop ---------- */
 function startWalk(){
-  S.phase='active'; S.intervened=false; S.rerouted=false; S.checkinShown=false;
+  S.phase='active'; S.rerouted=false; S.checkinShown=false; S.ticks=0; S.evIdx=0; S.avoided=0;
+  S.events=[
+    {tick:7, sev:'high', icon:'alert', kind:'Incident ahead on your route', headline:'Reported assault ahead',
+      detail:'A disturbance was just reported on the block ahead, confirmed by 6 people — directly on your path.',
+      why:'Violent + confirmed + on your path', off:[0.00016,0.00016]},
+    {tick:20, sev:'med', icon:'users', kind:'Suspicious person ahead', headline:'Someone flagged on your route',
+      detail:'2 people reported a person following pedestrians on the block ahead, minutes ago.',
+      why:'Matches "suspicious person / harassment" in your filters', off:[-0.00016,0.00014]}
+  ];
+  if(CFG.filters.types.registry) S.events.push({tick:32, sev:'reg', icon:'home', kind:'Registered address ahead',
+    headline:'Registered offender address ahead',
+    detail:'Your path passes a registered address from the public registry. Not an active incident, and shown without any names.',
+    why:'You turned on registered-address routing in Filters', off:[-0.00014,0.00016]});
   document.getElementById('hdrTitle').textContent='Guardian';
   const names=CFG.contacts.length?CFG.contacts.join(' · '):'your Safety Network';
   const avs=(CFG.contacts.length?CFG.contacts:['Guardian']).slice(0,3).map(function(n,i){return '<span class="av"'+(i?' style="background:#5c4310"':'')+'>'+n[0]+'</span>';}).join('');
@@ -558,19 +570,15 @@ function startWalk(){
 }
 function tick(){
   if(S.phase==='intervene') return;
-  S.idx++; S.simMin++;
+  S.idx++; S.simMin++; S.ticks=(S.ticks||0)+1;
   document.getElementById('clockT').textContent=fmtClock(S.simMin);
   if(S.idx>=S.route.length-1){ S.idx=S.route.length-1; arrive(); return; }
   S.pos=S.route[S.idx];
   S.layers.me.setLatLng(S.pos);
   S.map.panTo(S.pos,{animate:true,duration:.5});
   activeSheet();
-  // intervention: when LIVE, wait for an injected incident (safety-net at 72%); offline, auto-fire at 36%
-  const pct=S.idx/(S.route.length-1);
-  if(!S.intervened){
-    if(sb){ if(pct>=0.72) triggerIntervention(S.scriptInc); }
-    else if(pct>=0.36){ triggerIntervention(S.scriptInc); }
-  }
+  // fire the next scripted event when its walking-tick threshold is reached
+  if(S.events && S.evIdx<S.events.length && S.ticks>=S.events[S.evIdx].tick){ const ev=S.events[S.evIdx]; S.evIdx++; fireEvent(ev); }
   maybeCheckin();
   publishSession();
 }
@@ -582,7 +590,7 @@ function riskScore(inc, pos, route, idx){
   // is it ahead on the remaining path? min distance from incident to upcoming route points
   let ahead=Infinity;
   for(let i=idx;i<route.length;i++){const dd=haversine(inc.ll,route[i]); if(dd<ahead)ahead=dd;}
-  const sevW={low:1,med:2,high:3}[inc.sev];
+  const sevW={low:1,med:2,high:3,reg:2}[inc.sev]||2;
   const credW=inc.cred==='confirmed'?1.4:1;
   const onPath=ahead<120; // within 120m of the line ahead
   // score: high severity + on the path ahead + close + credible
@@ -590,24 +598,32 @@ function riskScore(inc, pos, route, idx){
   const score=sevW*credW*proximity*(onPath?2.2:0.5);
   return {score,d:Math.round(d),ahead:Math.round(ahead),onPath};
 }
+function fireEvent(ev){
+  const ai=Math.min(S.route.length-1, S.idx+9), bp=S.route[ai]||S.dest;
+  triggerIntervention({ll:[bp[0]+ev.off[0], bp[1]+ev.off[1]], sev:ev.sev, icon:ev.icon,
+    kind:ev.kind, headline:ev.headline, detail:ev.detail, why:ev.why, street:'the block ahead'});
+}
 function triggerIntervention(inc){
+  if(S.phase==='intervene') return;
   inc = inc || S.scriptInc;
-  S.intervened=true; S.activeInc=inc;
+  S.activeInc=inc;
   S.layers.inc.push(mkIncident(inc));
   const r=riskScore(inc,S.pos,S.route,S.idx);
-  // only intervene if the engine says it's high & on path
-  if(!(inc.sev==='high' && r.onPath)) return;
-  S.phase='intervene';
-  activeSheet();
-  const dist=r.d;
-  document.getElementById('interv').innerHTML=`
-    <div class="hd"><span class="warn">${ic('alert',15)} Hazard ahead on your route</span><span class="aibadge">${ic('spark',12)} GUARDIAN AI</span></div>
-    <h3>Police activity ${dist} m ahead</h3>
-    <p>A disturbance was reported on <b>${inc.street}</b> ${inc.mins} min ago, confirmed by ${inc.conf} people. It's directly on your current path.</p>
-    <div class="why"><b>Why I'm telling you:</b> high-severity + confirmed + within ${dist} m ahead of you. I found a detour on a nearby street that adds ~3 min and keeps you a block clear. ${'<i>AI can be wrong — trust what you see; call 911 in an emergency.</i>'}</div>
-    <button class="btn btn-white" onclick="reroute()">${ic('nav',17)} Reroute — safer street (+3 min)</button>
-    <div style="height:8px"></div>
-    <button class="btn btn-ghost" onclick="keepGoing()">Keep my route</button>`;
+  if(!r.onPath) return; // only intervene for things genuinely on the path ahead
+  S.phase='intervene'; activeSheet();
+  const dist=r.d, reg=(inc.sev==='reg');
+  const kind=inc.kind||(reg?'Registered address ahead':'Hazard ahead on your route');
+  const head=inc.headline||('Hazard '+dist+' m ahead');
+  const detail=inc.detail||('Reported on '+(inc.street||'the block ahead')+' — on your current path.');
+  const why=inc.why||('high-severity + confirmed');
+  document.getElementById('interv').innerHTML=
+    '<div class="hd"><span class="warn" style="color:'+(reg?'#b9aee6':'#ff9f97')+'">'+ic(reg?'home':'alert',15)+' '+kind+'</span><span class="aibadge">'+ic('spark',12)+' GUARDIAN AI</span></div>'+
+    '<h3>'+head+'</h3>'+
+    '<p>'+detail+'</p>'+
+    '<div class="why"><b>Why I\'m telling you:</b> '+why+', within '+dist+' m ahead of you. I found a detour on a nearby street (+~2 min). <i>AI can be wrong — trust what you see; call 911 in an emergency.</i></div>'+
+    '<button class="btn btn-white" onclick="reroute()">'+ic('nav',17)+' Reroute — safer street</button>'+
+    '<div style="height:8px"></div>'+
+    '<button class="btn btn-ghost" onclick="keepGoing()">Keep my route</button>';
   document.getElementById('interv').classList.add('show');
 }
 function detourFrom(pos,dest,inc){
@@ -617,11 +633,12 @@ function detourFrom(pos,dest,inc){
 }
 async function reroute(){
   document.getElementById('interv').classList.remove('show');
-  S.rerouted=true;
+  S.rerouted=true; S.avoided=(S.avoided||0)+1;
   const inc=S.activeInc||S.scriptInc;
-  const via=[inc.ll[0]-0.0016, inc.ll[1]+0.0026]; // detour a block to the side of the incident
+  const via=[inc.ll[0]-0.0015, inc.ll[1]+0.0022]; // detour a block to the side
   let det=await osrm([S.pos,via,S.dest]);
-  det=resample(det||detourFrom(S.pos,S.dest,inc),40);
+  const n=Math.max(14,Math.min(44,Math.round(haversine(S.pos,S.dest)/16)));
+  det=resample(det||detourFrom(S.pos,S.dest,inc),n);
   if(S.layers.detour)S.map.removeLayer(S.layers.detour);
   S.layers.detour=L.polyline(det,{color:'#30d158',weight:6,opacity:.95}).addTo(S.map);
   S.layers.route.setStyle({color:'#3a3f48',opacity:.5,dashArray:'2 8'});
@@ -673,7 +690,7 @@ function subscribeIncidents(){
     payload=>onLiveIncident(payload.new)).subscribe();
 }
 function onLiveIncident(row){
-  if(S.phase!=='active' || S.intervened) return;
+  if(S.phase!=='active') return;
   // place the injected incident ahead on the current route so it's genuinely on-path
   const ai=Math.min(S.route.length-1, S.idx+12), base=S.route[ai];
   const inc={ll:[base[0]+0.0002, base[1]+0.0001], sev:(row.severity||'high'), icon:'alert',
@@ -859,7 +876,7 @@ function closeFilters(){saveCfg();document.getElementById('filtersScreen').class
 
 /* check-in during a walk */
 let ciTimer=null, ciLeft=0;
-function maybeCheckin(){ if(!CFG.checkin||S.checkinShown||S.phase!=='active')return; if(S.idx>=8){S.checkinShown=true;showCheckin();} }
+function maybeCheckin(){ if(!CFG.checkin||S.checkinShown||S.phase!=='active')return; if((S.ticks||0)>=14){S.checkinShown=true;showCheckin();} }
 function showCheckin(){ ciLeft=12; const el=document.getElementById('checkin'); el.classList.add('show');
   const paint=function(){ el.innerHTML='<div style="background:#14110a;border:1px solid #5c4310;border-radius:16px;padding:14px 15px;box-shadow:0 14px 34px rgba(0,0,0,.5)">'+
     '<div style="display:flex;align-items:center;gap:8px;color:#ffcf80;font-size:12px;font-weight:700"><span style="width:9px;height:9px;border-radius:50%;background:#e0a52a;display:inline-block"></span> SAFETY CHECK-IN</div>'+
