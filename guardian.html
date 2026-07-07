@@ -630,7 +630,8 @@ function riskScore(inc, pos, route, idx){
 function fireEvent(ev){
   const ai=Math.min(S.route.length-1, S.idx+9), bp=S.route[ai]||S.dest;
   triggerIntervention({ll:[bp[0]+ev.off[0], bp[1]+ev.off[1]], sev:ev.sev, icon:ev.icon,
-    kind:ev.kind, headline:ev.headline, detail:ev.detail, why:ev.why, street:'the block ahead'});
+    kind:ev.kind, headline:ev.headline, detail:ev.detail, why:ev.why, street:'the block ahead',
+    reports:ev.reports, type:ev.type});
 }
 function triggerIntervention(inc){
   if(S.phase==='intervene') return;

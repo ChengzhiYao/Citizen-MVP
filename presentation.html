@@ -221,16 +221,16 @@
     <div class="chat">
       <div class="msg user"><div class="who">Me</div>Citizen has all these safety tools but they're scattered — you set each one up separately. What if we unify them: one tap that runs the safe route, live sharing and monitoring together?</div>
       <div class="msg ai"><div class="who">Claude</div>Framed that as Guardian — a one-tap proactive companion.</div>
-      <div class="msg user"><div class="who">Me</div>should we do a driving mode too, or is that a losing fight against google maps?</div>
+      <div class="msg user"><div class="who">Me</div>before i commit scope — is a driving mode even worth it, or do we just lose to google/waze on ETAs? my instinct is the real unmet need is the on-foot moment, not drivers.</div>
       <div class="msg ai"><div class="who">Claude</div>I'd skip driving — you can't out-navigate Google/Waze, and drivers are lower-risk. The defensible wedge is the pedestrian moment they ignore, so I'd scope it to walking.</div>
-      <div class="msg user"><div class="who">Me</div>yeah that makes sense — walking only then</div>
+      <div class="msg user"><div class="who">Me</div>good — and walking-only keeps the threat model tight: i'm not competing as a nav app, i'm covering the stretch where someone actually feels exposed on foot.</div>
       <div class="msg user"><div class="who">Me</div>for the routing… we can't actually <i>guarantee</i> a safe path right? google maps recalculates. so maybe pass it a waypoint and call it “safer route”, not “guaranteed”</div>
       <div class="msg ai"><div class="who">Claude</div>Built the waypoint handoff with that honest framing + an upfront disclaimer.</div>
-      <div class="msg user"><div class="who">Me</div>wait though — why would anyone use this over google maps' own rerouting?</div>
+      <div class="msg user"><div class="who">Me</div>devil's advocate — maps already reroutes. what's our actual wedge? i think it's the objective function: maps optimizes ETA and only ingests traffic; we'd route on safety incidents it never sees. is that a real moat or am i kidding myself?</div>
       <div class="msg ai"><div class="who">Claude</div>Different objective — Maps optimizes for time and ignores non-traffic personal-safety incidents. Guardian routes around those.</div>
       <div class="msg user"><div class="who">Me</div>i don't want a clickable mockup — can it actually run? read my location, simulate the walk, and show the AI actually reacting</div>
       <div class="msg ai"><div class="who">Claude</div>Built the live app — geolocation + compressed sim-time + a risk engine that reroutes.<div class="act">↳ <b>guardian.html</b></div></div>
-      <div class="msg user"><div class="who">Me</div>this route cuts through houses — that's not how streets work</div>
+      <div class="msg user"><div class="who">Me</div>the route's cutting straight through blocks — you're densifying a straight line, not following the street graph. switch to real routing (OSRM), and add a fallback for when the API's down so the demo never dead-ends.</div>
       <div class="msg ai"><div class="who">Claude</div>Switched to real street routing (OSRM) with a fallback.</div>
     </div>
   </div></section>
@@ -240,9 +240,9 @@
     <div class="kicker">Appendix · designing the MVP · 2 / 2</div>
     <h2>The AI, ethics &amp; privacy decisions</h2>
     <div class="chat">
-      <div class="msg user"><div class="who">Me</div>ok real question — where's the AI actually used here? feels mostly like rules</div>
+      <div class="msg user"><div class="who">Me</div>real question before we build more — where does the AI actually earn its place? routing and geofencing are deterministic, which is right. so is the LLM just decoration, or is there a job only it can do?</div>
       <div class="msg ai"><div class="who">Claude</div>Honest: routing &amp; geofencing are deliberately rules (you don't want an LLM hallucinating a reroute). The AI does what rules can't — read messy human reports + scanner chatter into a calm, classified signal.<div class="act">↳ <b>DeepSeek</b> via a serverless function, key server-side</div></div>
-      <div class="msg user"><div class="who">Me</div>the risk-prediction idea though… predicting “risky areas” — isn't that basically discrimination?</div>
+      <div class="msg user"><div class="who">Me</div>the “predict risky areas” idea worries me — train on historical incident data and you just relearn policing bias and redline whole neighborhoods. i don't want to ship that. keep the AI on live, specific incidents, not area scores.</div>
       <div class="msg ai"><div class="who">Claude</div>You're right — rejected ML area-prediction as algorithmic redlining; kept AI to specific, real-time incidents only.</div>
       <div class="msg user"><div class="who">Me</div>citizen surfaces registered offenders too… if we use that it has to be opt-in, no names, and make clear a listing isn't proof of danger</div>
       <div class="msg ai"><div class="who">Claude</div>Gated it exactly that way — opt-in, off by default, de-alarmed, no names, with the caveat.</div>
