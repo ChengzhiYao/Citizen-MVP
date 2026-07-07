@@ -182,6 +182,8 @@
   .gfab-btn{width:60px;height:60px;border-radius:50%;background:var(--blue);color:#fff;border:none;display:flex;align-items:center;justify-content:center;box-shadow:0 12px 30px rgba(47,107,255,.5);animation:gpulse 2.4s infinite;cursor:pointer}
   .gfab-btn .ic{font-size:27px}
   .gfab-lbl{font-size:11px;font-weight:700;color:#e7ecff;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);padding:3px 10px;border-radius:999px}
+  .grab{width:38px;height:4px;border-radius:2px;background:#3a3e48;margin:0 auto 12px;cursor:pointer}
+  .grab:hover{background:#565b66}
   @keyframes gpulse{0%{box-shadow:0 12px 30px rgba(47,107,255,.5),0 0 0 0 rgba(47,107,255,.45)}70%{box-shadow:0 12px 30px rgba(47,107,255,.5),0 0 0 15px rgba(47,107,255,0)}100%{box-shadow:0 12px 30px rgba(47,107,255,.5),0 0 0 0 rgba(47,107,255,0)}}
   .panel{background:rgba(12,13,17,.94);backdrop-filter:blur(16px);border:1px solid #23262e;border-radius:22px;padding:16px;
     box-shadow:0 20px 50px rgba(0,0,0,.5)}
@@ -500,15 +502,18 @@ async function buildScenario(destOverride){
   S.scriptInc={ll:[bp[0]+0.00016, bp[1]+0.00016],sev:'high',type:'Police activity / disturbance',icon:'alert',cred:'confirmed',mins:2,conf:6, street:'the block ahead'};
 }
 
-function drawBase(){
-  // route
-  S.layers.route=L.polyline(S.route,{color:'#2f6bff',weight:6,opacity:.95}).addTo(S.map);
-  // home + me
-  S.layers.home=L.marker(S.dest,{icon:divIcon('<div class="homeMk">'+ic('home',18)+'</div>','',34)}).addTo(S.map);
+function drawBase(withRoute){
+  // current location + ambient incidents always show on the home map
   S.layers.me=L.marker(S.pos,{icon:divIcon('<div class="meMk"></div>','',20),zIndexOffset:2000}).addTo(S.map);
-  // ambient incidents
   S.incidents.forEach(i=>S.layers.inc.push(mkIncident(i)));
-  S.map.fitBounds(S.layers.route.getBounds().pad(0.35));
+  // the route + destination pin only appear once a walk is being planned — not on the idle home map
+  if(withRoute){ ensureRoute(); }
+  else { S.map.setView(S.start,16); }
+}
+function ensureRoute(){
+  if(!S.layers.route){ S.layers.route=L.polyline(S.route,{color:'#2f6bff',weight:6,opacity:.95}).addTo(S.map); }
+  if(!S.layers.home){ S.layers.home=L.marker(S.dest,{icon:divIcon('<div class="homeMk">'+ic('home',18)+'</div>','',34)}).addTo(S.map); }
+  try{ S.map.fitBounds(S.layers.route.getBounds().pad(0.35)); }catch(e){}
 }
 
 /* ---------- clock ---------- */
@@ -520,6 +525,7 @@ function renderIdle(){
   document.getElementById('hdrTitle').textContent='Guardian';
   document.getElementById('sheet').innerHTML=`
     <div class="panel">
+      <div class="grab" onclick="collapseGuardian()" title="Minimize"></div>
       <div class="statusbar"><span class="sdot amber"></span><div><div class="st">1 active incident nearby</div><div class="ss">Within 1 mile · low activity</div></div></div>
       <div class="qrow">
         <div class="quick" onclick="showPlan()">${ic('shield',17)} Walk With Me</div>
@@ -540,8 +546,16 @@ function openGuardian(){
   document.getElementById('gfab').classList.remove('show');
   const sh=document.getElementById('sheet'); sh.style.display=''; sh.style.animation='up .3s ease';
 }
+function collapseGuardian(){
+  S.guardianOpen=false;
+  ['route','detour','home'].forEach(function(k){ if(S.layers[k]){ S.map.removeLayer(S.layers[k]); S.layers[k]=null; } });
+  document.getElementById('sheet').style.display='none';
+  document.getElementById('gfab').classList.add('show');
+  if(S.map) S.map.setView(S.start,16);
+}
 function showPlan(){
   S.phase='plan';
+  ensureRoute();
   const names=CFG.contacts.length?CFG.contacts.join(' · '):'no one yet — add contacts';
   const nTypes=Object.keys(CFG.filters.types).filter(function(k){return CFG.filters.types[k];}).length;
   const thL={serious:'only serious ones on your path',medium:'medium & up',all:'everything nearby'}[CFG.filters.threshold];
@@ -854,6 +868,7 @@ function srThreats(){
 }
 function showSafeRoute(){
   S.phase='saferoute';
+  ensureRoute();
   document.getElementById('hdrTitle').textContent='Safe Route';
   const direct=(S.directGeom&&S.directGeom.length)?S.directGeom:densify([S.start,S.dest],20);
   const threats=srThreats();
@@ -896,7 +911,7 @@ function closeSafeRoute(){ clearCmp(); if(S.layers.route)S.layers.route.setStyle
 async function refreshScenario(dest){
   ['route','detour','me','home'].forEach(function(k){if(S.layers[k])S.map.removeLayer(S.layers[k]);S.layers[k]=null;});
   S.layers.inc.forEach(function(m){S.map.removeLayer(m);});S.layers.inc=[]; clearCmp();
-  await buildScenario(dest); drawBase();
+  await buildScenario(dest); drawBase(true); // destination chosen → show the route preview
 }
 function showDestination(){
   S.phase='dest';
