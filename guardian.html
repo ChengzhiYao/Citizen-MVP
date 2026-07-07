@@ -259,7 +259,7 @@
   <div id="map"></div>
 
   <div class="topbar">
-    <div class="brand"><svg class="ic"><use href="#g-layers"/></svg> <span id="hdrTitle">Incidents</span> <svg class="ic" style="font-size:14px;color:#8b9099"><use href="#g-chevD"/></svg></div>
+    <div class="brand"><svg class="ic"><use href="#g-shield"/></svg> <span id="hdrTitle">Guardian</span> <svg class="ic" style="font-size:14px;color:#8b9099"><use href="#g-chevD"/></svg></div>
     <div class="hactions">
       <div class="clock" id="clock"><span class="dot"></span> <span id="clockT">9:58 PM</span></div>
       <button class="iconbtn"><svg class="ic" style="font-size:17px"><use href="#g-user"/></svg></button>
@@ -518,7 +518,7 @@ function fmtClock(m){let h=Math.floor(m/60)%24,mm=m%60,ap=h>=12?'PM':'AM',h12=h%
 /* ---------- UI states ---------- */
 function renderIdle(){
   S.map && S.map.setView(S.start,16);
-  document.getElementById('hdrTitle').textContent='Incidents';
+  document.getElementById('hdrTitle').textContent='Guardian';
   document.getElementById('sheet').innerHTML=`
     <div class="panel">
       <div class="statusbar"><span class="sdot amber"></span><div><div class="st">1 active incident nearby</div><div class="ss">Within 1 mile · low activity</div></div></div>
@@ -771,7 +771,7 @@ function arrive(){
 function switchTab(name){
   document.querySelectorAll('.cnav button').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
   document.querySelectorAll('.scr').forEach(s=>s.classList.remove('show'));
-  const onMap = (name==='home'||name==='safety');
+  const onMap = (name==='safety'); // Guardian lives on the Safety tab; Home is the incident feed
   document.getElementById('sheet').style.display = onMap ? '' : 'none';
   if(!onMap){ const el=document.getElementById('scr-'+name); el.classList.add('show'); el.scrollTop=0; }
 }
