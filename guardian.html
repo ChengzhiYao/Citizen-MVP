@@ -133,7 +133,9 @@
   .aiblk{background:#15112a;border:1px solid #322a5e;border-radius:11px;padding:11px 12px;margin:11px 0 0;font-size:12.5px;color:#cdc6ec;line-height:1.5}
   .aiblk .aibadge{margin-bottom:7px}
   .aiblk .aitxt b{color:#efe9ff}
-  .aiblk .aimeta{color:#a89fce;font-size:11px;margin-top:6px;text-transform:capitalize}
+  .aiblk .ainote{margin-top:8px;padding:8px 10px;background:#1a1230;border:1px solid #3a2f70;border-radius:9px;color:#d7cbf5;font-size:11px;line-height:1.45}
+  .aiblk .ainote b{color:#c2b3ff}
+  .aiblk .aimeta{color:#a89fce;font-size:11px;margin-top:8px;text-transform:capitalize}
   .aiblk .aisrc{color:#7f77ad;font-size:10.5px;margin-top:4px}
   /* raw reports shown when AI summaries are OFF — the messy feed you sift yourself */
   .rawbadge{display:inline-flex;align-items:center;gap:5px;background:#191b22;border:1px solid #2a2d35;color:#aeb3bc;font-size:10px;font-weight:700;padding:4px 9px;border-radius:999px;letter-spacing:.05em;white-space:nowrap}
@@ -580,11 +582,19 @@ function startWalk(){
     {tick:7, sev:'high', icon:'alert', kind:'Incident ahead on your route', headline:'Reported assault ahead',
       detail:'A disturbance was just reported on the block ahead, confirmed by 6 people — directly on your path.',
       why:'Violent + confirmed + on your path', off:[0.00016,0.00016], type:'assault',
-      reports:['omg someone just got jumped by the corner, two guys ran off','cop cars flying in with sirens right now','heard shouting then everyone scattered, someone on the ground?','another says it\'s calming down, police have it','scanner: units responding, assault in progress, one down']},
+      reports:['omg someone just got jumped by the corner, two guys ran off','cop cars flying in with sirens right now','heard shouting then everyone scattered, someone on the ground?','another says it\'s calming down, police have it','scanner: units responding, assault in progress, one down'],
+      ai:{headline:'Assault at the corner — police on scene, now de-escalating',
+        summary:'5 reports + scanner describe an assault at the corner; two people fled and one person was down. Police have arrived.',
+        note:'Reports disagree on whether it\'s over — one says it\'s calming down. Treating as active until police clear it.',
+        severity:'High', credibility:'Confirmed · police + scanner', relevance:'On your path'}},
     {tick:20, sev:'med', icon:'users', kind:'Suspicious person ahead', headline:'Someone flagged on your route',
       detail:'2 people reported a person following pedestrians on the block ahead, minutes ago.',
       why:'Matches "suspicious person / harassment" in your filters', off:[-0.00016,0.00014], type:'suspicious person',
-      reports:['creepy guy been circling the block for like 10 min following women','same dude asked me weird stuff, wouldn\'t leave me alone','he\'s pacing near the deli, dark hoodie','idk might be nothing but felt off']}
+      reports:['creepy guy been circling the block for like 10 min following women','same dude asked me weird stuff, wouldn\'t leave me alone','he\'s pacing near the deli, dark hoodie','idk might be nothing but felt off'],
+      ai:{headline:'One man following pedestrians near the deli',
+        summary:'4 reports describe the same man circling the block ~10 min and approaching women near the deli, dark hoodie.',
+        note:'No police or official source — consistent across users but unconfirmed. Flagged as caution, not a proven threat.',
+        severity:'Medium', credibility:'Unconfirmed · user reports only', relevance:'On your path'}}
   ];
   if(CFG.filters.types.registry) S.events.push({tick:32, sev:'reg', icon:'home', kind:'Registered address ahead',
     headline:'Registered offender address ahead',
@@ -634,7 +644,7 @@ function fireEvent(ev){
   const ai=Math.min(S.route.length-1, S.idx+9), bp=S.route[ai]||S.dest;
   triggerIntervention({ll:[bp[0]+ev.off[0], bp[1]+ev.off[1]], sev:ev.sev, icon:ev.icon,
     kind:ev.kind, headline:ev.headline, detail:ev.detail, why:ev.why, street:'the block ahead',
-    reports:ev.reports, type:ev.type});
+    reports:ev.reports, type:ev.type, ai:ev.ai});
 }
 function triggerIntervention(inc){
   if(S.phase==='intervene') return;
@@ -684,18 +694,23 @@ function triggerIntervention(inc){
 }
 async function aiSummarize(inc, dist){
   const el=document.getElementById('aitxt'); if(!el) return;
+  let j=null, live=false;
   try{
     const res=await fetch('/api/summarize',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({reports:inc.reports, distanceMeters:dist, onPath:true, type:inc.type||inc.kind||'incident'})});
-    const j=await res.json();
-    if(el.id!=='aitxt') return; // card changed
-    if(j && j.summary){
-      const badge=document.querySelector('#aiblk .aibadge'); if(badge) badge.innerHTML=ic('spark',12)+' AI-GENERATED · DeepSeek';
-      el.innerHTML='<b>'+(j.headline||'')+'</b><br>'+j.summary+
-        '<div class="aimeta">'+[j.severity,j.credibility,j.relevance].filter(Boolean).join(' · ')+'</div>'+
-        '<div class="aisrc">Condensed from '+inc.reports.length+' raw reports + scanner by AI</div>';
-    } else { const b=document.getElementById('aiblk'); if(b) b.style.display='none'; }
-  }catch(e){ const b=document.getElementById('aiblk'); if(b) b.style.display='none'; }
+    j=await res.json();
+    if(j && j.summary) live=true;
+  }catch(e){ j=null; }
+  if(el.id!=='aitxt') return; // card changed
+  // Fall back to the built-in condensed summary so the AI block ALWAYS shows what AI does — even offline.
+  if(!(j && j.summary)) j = inc.ai || null;
+  if(!(j && j.summary)){ const b=document.getElementById('aiblk'); if(b) b.style.display='none'; return; }
+  const badge=document.querySelector('#aiblk .aibadge');
+  if(badge) badge.innerHTML=ic('spark',12)+(live?' AI-GENERATED · DeepSeek':' AI SUMMARY · sample');
+  el.innerHTML='<b>'+(j.headline||'')+'</b><br>'+j.summary+
+    (j.note?'<div class="ainote">'+ic('spark',11)+' <b>AI note:</b> '+j.note+'</div>':'')+
+    '<div class="aimeta">'+[j.severity,j.credibility,j.relevance].filter(Boolean).join(' · ')+'</div>'+
+    '<div class="aisrc">Condensed from '+inc.reports.length+' raw reports + scanner by AI</div>';
 }
 function detourFrom(pos,dest,inc){
   // via point offset from the incident, perpendicular-ish away, then to dest
