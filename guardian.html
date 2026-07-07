@@ -222,6 +222,9 @@
   .interv p{margin:0 0 6px;font-size:13.5px;color:#cdc6ec;line-height:1.5}
   .interv .why{font-size:12px;color:#9a92c2;line-height:1.5;background:#15112a;border:1px solid #2e2856;border-radius:11px;padding:10px 12px;margin:10px 0 14px}
   .interv .why b{color:#d7d0f5}
+  /* rules-engine voice (AI off): neutral, not the AI purple */
+  .interv .why.rules{color:#a4a9b2;background:#0e0f13;border-color:#23262e}
+  .interv .why.rules b{color:#dfe2e8}
 
   /* toast */
   .toast{position:absolute;left:50%;top:96px;transform:translateX(-50%);z-index:45;background:rgba(20,16,5,.95);
@@ -668,7 +671,9 @@ function triggerIntervention(inc){
     '<div class="hd"><span class="warn" style="color:'+(reg?'#b9aee6':'#ff9f97')+'">'+ic(reg?'home':'alert',15)+' '+kind+'</span>'+headBadge+'</div>'+
     '<h3>'+head+'</h3>'+
     block+
-    '<div class="why"><b>Why I\'m telling you:</b> '+why+', within '+dist+' m ahead of you. I found a detour on a nearby street (+~2 min). <i>'+caveat+'</i></div>'+
+    (aiOn
+      ? '<div class="why"><b>Why I\'m telling you:</b> '+why+', within '+dist+' m ahead of you. I found a detour on a nearby street (+~2 min). <i>'+caveat+'</i></div>'
+      : '<div class="why rules"><b>Flagged by your safety rules</b> (not AI): '+why+', within '+dist+' m ahead. A safer detour is available on a nearby street (+~2 min). <i>'+caveat+'</i></div>')+
     '<button class="btn btn-white" onclick="reroute()">'+ic('nav',17)+' Reroute — safer street</button>'+
     '<div style="height:8px"></div>'+
     '<button class="btn btn-ghost" onclick="keepGoing()">Keep my route</button>';
