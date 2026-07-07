@@ -1,0 +1,94 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<title>Guardian — after</title>
+<style>
+  :root{--green:#30d158;--blue:#2f6bff;--red:#ff453a;--navh:56px}
+  *{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;background:#000;color:#f4f5f7;font-family:"Inter",-apple-system,Segoe UI,Roboto,sans-serif;letter-spacing:-.01em;overflow:hidden}
+  #app{position:relative;width:100%;height:100%;overflow:hidden;background:#0a0d13}
+  #map{position:absolute;inset:0;z-index:1}
+  .ic{width:1em;height:1em;display:inline-block;flex:0 0 auto;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.14em}
+  /* Citizen chrome — the detail layered on top of the same framework */
+  .topbar{position:absolute;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:12px 14px 10px;background:linear-gradient(180deg,rgba(0,0,0,.9),rgba(0,0,0,0))}
+  .brand{display:flex;align-items:center;gap:7px;font-weight:700;font-size:16px}
+  .brand .ic{font-size:16px;color:#7da6ff}
+  .clk{display:flex;align-items:center;gap:6px;background:rgba(22,24,31,.85);border-radius:999px;padding:5px 10px;font-size:11px;font-weight:600;color:#cfd3da}
+  .clk .dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px rgba(48,209,88,.2)}
+  .mk{position:absolute;transform:translate(-50%,-50%);z-index:5}
+  .me{width:15px;height:15px;border-radius:50%;background:var(--blue);border:3px solid #fff;box-shadow:0 0 0 6px rgba(47,107,255,.22)}
+  .inc{width:24px;height:24px;border-radius:50%;background:#1d0f0c;border:2px solid var(--red);display:flex;align-items:center;justify-content:center;color:#ff8078;font-weight:800;font-size:13px}
+  .home{width:22px;height:22px;border-radius:50%;background:#0c1726;border:2px solid var(--blue);display:flex;align-items:center;justify-content:center;color:#7da6ff;font-size:11px}
+  /* the SAME decision card as v1 — now with an AI block grown inside it */
+  .card{position:absolute;left:12px;right:12px;bottom:var(--navh);z-index:40;background:#100d1f;border:1px solid #372e6b;border-radius:18px;padding:13px;box-shadow:0 22px 50px rgba(0,0,0,.6)}
+  .card .hd{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+  .warn{display:inline-flex;align-items:center;gap:6px;color:#ff9f97;font-size:13.5px;font-weight:700}
+  .aibadge{display:inline-flex;align-items:center;gap:5px;background:#1a1533;border:1px solid #3a2f70;color:#c2b3ff;font-size:8.5px;font-weight:700;padding:3px 7px;border-radius:999px;letter-spacing:.04em;white-space:nowrap}
+  .aibadge .ic{font-size:10px}
+  .sub{color:#9aa0ab;font-size:12px;margin:0 0 9px;line-height:1.4}
+  .aiblk{background:#15112a;border:1px solid #322a5e;border-radius:10px;padding:9px 10px;font-size:11px;color:#cdc6ec;line-height:1.45}
+  .aiblk .aibadge{margin-bottom:6px}
+  .aiblk b{color:#efe9ff}
+  .aiblk .aimeta{color:#a89fce;font-size:10px;margin-top:5px;text-transform:capitalize}
+  .row{display:flex;gap:9px;margin-top:11px}
+  .btn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;border:none;border-radius:11px;padding:11px;font-size:12.5px;font-weight:700;font-family:inherit;line-height:1.15}
+  .btn-white{background:#fff;color:#000}
+  .btn-ghost{background:#1b1a26;color:#d4d7de;border:1px solid #2a2d35}
+  .cnav{position:absolute;left:0;right:0;bottom:0;height:var(--navh);background:rgba(0,0,0,.92);border-top:1px solid #16181d;display:flex;z-index:30}
+  .cnav button{flex:1;background:none;border:none;color:#5f636c;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:8px;font-weight:500;position:relative;font-family:inherit}
+  .cnav button.active{color:#fff}
+  .cnav .ic{font-size:17px}
+  .cnav .nb{position:absolute;top:5px;left:50%;margin-left:4px;background:var(--red);color:#fff;font-size:7px;font-weight:700;min-width:12px;height:12px;border-radius:6px;display:flex;align-items:center;justify-content:center;padding:0 3px;border:1.5px solid #000}
+</style></head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs>
+  <symbol id="g-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+  <symbol id="g-nav" viewBox="0 0 24 24"><path d="M3 11l19-9-9 19-2-8-8-2z"/></symbol>
+  <symbol id="g-alert" viewBox="0 0 24 24"><path d="M10.3 3.9 2 18a2 2 0 0 0 1.7 3h16.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></symbol>
+  <symbol id="g-spark" viewBox="0 0 24 24"><path d="M12 3l1.7 4.6L18.5 9l-4.8 1.4L12 15l-1.7-4.6L5.5 9l4.8-1.4L12 3z"/><path d="M19 13.5l.7 1.9 2 .6-2 .7-.7 1.8-.7-1.8-2-.7 2-.6.7-1.9z"/></symbol>
+  <symbol id="g-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 9.5V20h14V9.5"/><path d="M9.5 20v-6h5v6"/></symbol>
+  <symbol id="g-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19"/><path d="M12 2.5a14 14 0 0 1 0 19 14 14 0 0 1 0-19z"/></symbol>
+  <symbol id="g-video" viewBox="0 0 24 24"><rect x="2" y="6" width="13" height="12" rx="2.5"/><path d="M15 10.5l6-3.5v10l-6-3.5"/></symbol>
+  <symbol id="g-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></symbol>
+  <symbol id="g-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+</defs></svg>
+
+<div id="app">
+  <!-- same framework: map with route + incident. Detail added: route now follows real streets. -->
+  <svg id="map" viewBox="0 0 262 542" preserveAspectRatio="xMidYMid slice">
+    <rect width="262" height="542" fill="#0a0d13"/>
+    <g stroke="#171b23" stroke-width="9"><path d="M-10 150 H272"/><path d="M-10 300 H272"/><path d="M-10 430 H272"/><path d="M96 -10 V552"/><path d="M180 -10 V552"/></g>
+    <g stroke="#12151c" stroke-width="4"><path d="M-10 75 H272"/><path d="M-10 225 H272"/><path d="M-10 365 H272"/><path d="M55 -10 V552"/><path d="M135 -10 V552"/><path d="M225 -10 V552"/></g>
+    <path d="M131 92 L131 150 L96 150 L96 225 L135 225 L135 472" fill="none" stroke="#2f6bff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  <div class="mk" style="left:51%;top:87%"><div class="me"></div></div>
+  <div class="mk" style="left:37%;top:35%"><div class="inc">!</div></div>
+  <div class="mk" style="left:50%;top:17%"><div class="home"><svg class="ic"><use href="#g-home"/></svg></div></div>
+
+  <div class="topbar">
+    <div class="brand"><svg class="ic"><use href="#g-shield"/></svg> Guardian</div>
+    <div class="clk"><span class="dot"></span> Walking · 9:58 PM</div>
+  </div>
+
+  <!-- the SAME hazard decision card as v1 — but now an AI block has grown inside it -->
+  <div class="card">
+    <div class="hd"><span class="warn"><svg class="ic" style="font-size:15px"><use href="#g-alert"/></svg> Hazard ahead</span><span class="aibadge"><svg class="ic"><use href="#g-spark"/></svg> GUARDIAN AI</span></div>
+    <p class="sub">An incident is on your route, 180&nbsp;m ahead.</p>
+    <div class="aiblk">
+      <span class="aibadge"><svg class="ic"><use href="#g-spark"/></svg> AI-GENERATED · DeepSeek</span>
+      <span><b>Fight outside a bar on Hillside Ave.</b> Police dispatched, not yet on scene.</span>
+      <div class="aimeta">high · confirmed · on your path · from 5 reports</div>
+    </div>
+    <div class="row"><button class="btn btn-white"><svg class="ic" style="font-size:14px"><use href="#g-nav"/></svg> Reroute — safer street</button><button class="btn btn-ghost">Keep my route</button></div>
+  </div>
+
+  <div class="cnav">
+    <button><svg class="ic"><use href="#g-home"/></svg>Home</button>
+    <button><svg class="ic"><use href="#g-globe"/></svg><span class="nb">4</span>News</button>
+    <button><svg class="ic"><use href="#g-video"/></svg>Go Live</button>
+    <button class="active"><svg class="ic"><use href="#g-shield"/></svg>Safety</button>
+    <button><svg class="ic"><use href="#g-bell"/></svg><span class="nb">5</span>Alerts</button>
+    <button><svg class="ic"><use href="#g-user"/></svg>Profile</button>
+  </div>
+</div>
+</body></html>

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Citizen Guardian — Proactive Safety</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#08090c;--surface:#0e1015;--surface2:#14161c;--line:#20232b;--line2:#2a2e37;
+    --text:#f3f4f7;--muted:#9aa0ab;--muted2:#6b7079;
+    --blue:#2f6bff;--red:#ff453a;--green:#30d158;--amber:#e0a52a;--ai:#9b7bff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:#050507;color:var(--text);
+    font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;letter-spacing:-.01em;-webkit-font-smoothing:antialiased}
+  .deck{position:relative;height:100vh;width:100vw;overflow:hidden}
+  .slide{position:absolute;inset:0;padding:5vh 7vw;display:none;flex-direction:column;justify-content:center;
+    opacity:0;transition:opacity .4s ease;overflow-y:auto}
+  .slide.active{display:flex;opacity:1}
+  .slide::-webkit-scrollbar{width:0}
+  .inner{max-width:1080px;width:100%;margin:0 auto}
+  .kicker{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--blue);margin-bottom:16px}
+  .kicker .n{background:#0c1424;border:1px solid #24407a;color:#8fb4ff;border-radius:6px;padding:2px 8px}
+  h1{font-size:clamp(28px,4.6vw,54px);font-weight:800;line-height:1.05;letter-spacing:-.03em;margin-bottom:18px}
+  h2{font-size:clamp(24px,3.4vw,40px);font-weight:800;line-height:1.1;letter-spacing:-.03em;margin-bottom:14px}
+  .lead{font-size:clamp(15px,1.7vw,20px);color:#c6cbd4;line-height:1.55;max-width:840px;margin-bottom:8px}
+  .muted{color:var(--muted)}
+  p{line-height:1.55}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:22px}
+  .grid.g3{grid-template-columns:1fr 1fr 1fr}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px 20px}
+  .card h3{font-size:15.5px;font-weight:700;margin-bottom:7px;display:flex;align-items:center;gap:9px}
+  .card p{font-size:13px;color:#b3b8c2;line-height:1.5}
+  .card.blue{border-color:#26407a;background:linear-gradient(160deg,#0d1626,#0b0d13)}
+  .card.red{border-color:#4a2420;background:linear-gradient(160deg,#1a0f0d,#0b0d13)}
+  .card.green{border-color:#1f4a32;background:linear-gradient(160deg,#0c1a12,#0b0d13)}
+  .card.ai{border-color:#3a2f6b;background:linear-gradient(160deg,#12102a,#0b0d13)}
+  .dot{width:9px;height:9px;border-radius:50%;flex:0 0 9px}
+  .dot.b{background:var(--blue)}.dot.r{background:var(--red)}.dot.g{background:var(--green)}.dot.a{background:var(--ai)}.dot.y{background:var(--amber)}
+  ul.clean{list-style:none;margin-top:12px}
+  ul.clean li{position:relative;padding-left:24px;margin-bottom:10px;font-size:14.5px;color:#c6cbd4;line-height:1.5}
+  ul.clean li::before{content:"";position:absolute;left:2px;top:8px;width:8px;height:8px;border-radius:50%;background:var(--blue)}
+  ul.clean li b{color:#fff}
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:5px 11px;border-radius:999px;
+    background:#14161c;border:1px solid var(--line2);color:#cfd3da;margin:0 6px 8px 0}
+  .chip.free{background:#0e2417;border-color:#1f5234;color:#5fe39a}
+  .chip.prem{background:#15112a;border-color:#352a63;color:#bfb0ff}
+  .row{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
+  .cmp{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:8px}
+  .cmp .col{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:15px}
+  .cmp .lab{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
+  .cmp .in .lab{color:#8fb4ff}.cmp .out .lab{color:#5fe39a}
+  .cmp li{font-size:12.5px;color:#c6cbd4;padding:5px 0;border-bottom:1px solid #15171d;list-style:none;line-height:1.4}
+  .cmp li:last-child{border:none}
+  .big-quote{font-size:clamp(19px,2.4vw,30px);font-weight:700;line-height:1.3;letter-spacing:-.02em;max-width:940px}
+  .big-quote .hl{color:#8fb4ff}
+  .arch{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:20px}
+  .archbox{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+  .archbox .t{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#8fb4ff;margin-bottom:10px}
+  .archbox ul{list-style:none}.archbox li{font-size:12.5px;color:#c6cbd4;padding:5px 0;line-height:1.4}.archbox li b{color:#fff}
+  /* live embeds */
+  .phone{width:280px;height:560px;max-width:80vw;border-radius:34px;border:9px solid #15161b;overflow:hidden;background:#000;box-shadow:0 24px 60px rgba(0,0,0,.55);margin:0 auto}
+  .phone iframe{width:100%;height:100%;border:0;display:block;background:#000}
+  .demorow{display:flex;gap:36px;justify-content:center;align-items:flex-start;margin-top:20px;flex-wrap:wrap}
+  .demonote{text-align:center;font-size:11.5px;color:var(--muted2);margin-top:14px}
+  .livelink{display:inline-flex;align-items:center;gap:9px;background:#0c1424;border:1px solid #2f6bff;color:#cfe0ff;border-radius:12px;padding:13px 18px;font-size:15px;font-weight:600;text-decoration:none;margin-top:6px}
+  .livelink b{color:#fff;font-weight:800}.livelink:hover{background:#101d38}
+  .livelink .pulse{width:9px;height:9px;border-radius:50%;background:#30d158;box-shadow:0 0 0 4px rgba(48,209,88,.2);animation:lp 1.4s infinite}
+  @keyframes lp{0%,100%{opacity:1}50%{opacity:.35}}
+  /* chat (appendix) */
+  .chat{max-width:840px;margin:16px auto 0;display:flex;flex-direction:column;gap:11px}
+  .msg{max-width:86%;padding:11px 14px;border-radius:15px;font-size:13.5px;line-height:1.5}
+  .msg.user{align-self:flex-end;background:#153163;border:1px solid #2f6bff;color:#eaf1ff;border-bottom-right-radius:5px}
+  .msg.ai{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:5px}
+  .msg .who{font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;opacity:.75}
+  .msg.user .who{color:#a9c6ff}.msg.ai .who{color:#8fb4ff}
+  .msg .act{margin-top:7px;font-size:11.5px;color:#7fd0a0;border-top:1px solid #1e2027;padding-top:7px}
+  .msg .act b{color:#a7e6c2}
+  .divider{align-items:center;text-align:center}
+  .divider h2{color:var(--muted)}
+  /* code compare */
+  .codewrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+  .code{background:#0a0c10;border:1px solid #1c2027;border-radius:12px;padding:14px 15px;font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:12px;line-height:1.75;overflow-x:auto}
+  .code .h{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;font-family:"Inter",sans-serif}
+  .code .h.a{color:#8fb4ff}.code .h.b{color:#5fe39a}
+  .code .ln{color:#c6cbd4;white-space:pre}
+  .code .cm{color:#5a6270}
+  .code .add{color:#7fe6a8}
+  .code .note{font-family:"Inter",sans-serif;font-size:11.5px;color:#8890a0;margin-top:11px;line-height:1.45}
+  @media(max-width:760px){.codewrap{grid-template-columns:1fr}}
+  /* nav + chrome */
+  .nav{position:fixed;bottom:0;left:0;right:0;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:linear-gradient(0deg,rgba(5,5,7,.95),transparent);z-index:50}
+  .nav .dots{display:flex;gap:6px;flex-wrap:wrap;max-width:60vw}
+  .nav .d{width:8px;height:8px;border-radius:50%;background:#2a2e37;cursor:pointer;transition:.2s}
+  .nav .d.on{background:var(--blue);width:22px;border-radius:4px}
+  .nav .d.appx{background:#3a2f18}
+  .nav .ctrl{display:flex;align-items:center;gap:10px}
+  .nav button{background:#14161c;border:1px solid var(--line2);color:#cfd3da;width:38px;height:38px;border-radius:10px;font-size:18px;cursor:pointer}
+  .nav button:hover{background:#1c1f27}
+  .nav .count{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;min-width:70px;text-align:center}
+  .brand{position:fixed;top:18px;left:22px;z-index:50;display:flex;align-items:center;gap:9px;font-size:13px;font-weight:700;color:#aeb3bc}
+  .brand .lg{width:24px;height:24px;border-radius:7px;background:#0c1424;border:1px solid #24407a;color:#8fb4ff;display:flex;align-items:center;justify-content:center}
+  .hint{position:fixed;top:18px;right:22px;z-index:50;font-size:11px;color:var(--muted2)}
+  .ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.12em}
+  a{color:#8fb4ff}
+  @media(max-width:760px){ .grid,.grid.g3,.arch,.cmp{grid-template-columns:1fr} .nav .dots{max-width:38vw} }
+</style>
+</head>
+<body>
+<div class="brand"><span class="lg"><svg class="ic" style="font-size:15px" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span> Citizen Guardian</div>
+<div class="hint">← → to navigate</div>
+
+<div class="deck" id="deck">
+
+  <!-- 1 · TITLE -->
+  <section class="slide active"><div class="inner">
+    <div class="kicker"><span class="n">Concept</span> Citizen · Proactive Safety</div>
+    <h1>Guardian — turning Citizen from a<br>reactive fear feed into proactive safety.</h1>
+    <p class="lead">A one-tap AI companion that plans your safest walk, watches for incidents on your path <b>before</b> they reach you, and lets the people you trust look after you — live.</p>
+    <a class="livelink" href="https://citizen-mvp.vercel.app/guardian.html" target="_blank"><span class="pulse"></span> Running live — <b>citizen-mvp.vercel.app/guardian.html</b></a>
+    <div class="row" style="margin-top:20px">
+      <span class="chip">Working prototype · coded + deployed</span>
+      <span class="chip prem">Live AI · DeepSeek</span>
+      <span class="chip free">Realtime · Supabase</span>
+    </div>
+    <p class="lead" style="font-size:15px;margin-top:16px;color:#c6cbd4">→ I'll open the live app and walk you through a real trip first — then come back to the thinking behind it.</p>
+    <p class="muted" style="margin-top:12px;font-size:13px">Built with Claude · Vercel + Supabase · routing via OSRM · LLM via DeepSeek</p>
+  </div></section>
+
+  <!-- 2 · WHY (problem → insight) -->
+  <section class="slide"><div class="inner">
+    <div class="kicker">Why I built this</div>
+    <h2>Citizen tells you what's happening — but doesn't help you avoid it</h2>
+    <div class="grid">
+      <div class="card red">
+        <h3><span class="dot r"></span> What feels off today</h3>
+        <p style="margin-bottom:9px"><b>You pay to control your own alerts.</b> Choosing which alerts you get, and where, is a paid (Premium) feature.</p>
+        <p style="margin-bottom:9px"><b>It floods you with everything, everywhere.</b> A stream of citywide incidents — widely criticized for making people <i>more</i> anxious, not safer.</p>
+        <p style="margin-bottom:9px"><b>You don't know what happens after you post.</b> When I tried Go Live, it never said how long to record, or where the video ends up.</p>
+        <p><b>The “people who look out for you” part just sits there.</b> Safety Network, friends &amp; location sharing exist — but they're passive settings, not something that helps in the moment.</p>
+      </div>
+      <div class="card green">
+        <h3><span class="dot g"></span> What Guardian does instead</h3>
+        <p>The real problem isn't missing features — <b>staying safe just takes too many separate steps</b>. Nobody sets up five tools while walking home scared.</p>
+        <p style="margin-top:10px">Guardian does it all in <b>one tap</b>: it picks your <b>safest route</b>, shares your <b>live location</b> with people you trust, and <b>warns you about incidents on your path — before they reach you</b>.</p>
+      </div>
+    </div>
+    <div class="big-quote" style="margin-top:22px">From <span class="hl">an app that makes you anxious</span> → <span class="hl">one that actually helps you get home safe.</span></div>
+  </div></section>
+
+  <!-- 4 · THE AI -->
+  <section class="slide"><div class="inner">
+    <div class="kicker">The AI · where it earns its place</div>
+    <h2>AI turns messy human reports into a calm, trustworthy signal</h2>
+    <div class="big-quote" style="margin:6px 0 6px"><span class="hl">AI for understanding &amp; prediction. Rules for safety-critical actions.</span></div>
+    <p class="lead" style="font-size:16px;margin-bottom:6px">Rerouting is geometry; geofencing is deterministic — you don't want an LLM <i>hallucinating</i> a reroute or a 911 call. <b>AI doesn't replace the rules — it compresses chaos into a signal the rules can safely act on.</b></p>
+    <div class="cmp">
+      <div class="col in"><div class="lab">Raw in · scanner + public-safety + community signals</div>
+        <li>scanner: “possible assault, one person down”</li>
+        <li>dispatch: “units responding to 5th Ave &amp; Main St”</li>
+        <li>user video: police activity visible near the intersection</li>
+        <li>official update: “suspect fled northbound”</li>
+        <li>community report: shouting heard before police arrived</li>
+      </div>
+      <div class="col out"><div class="lab">AI out · trusted incident signal</div>
+        <li><b>Assault reported, police responding</b></li>
+        <li>severity <b>high</b> · credibility <b>scanner + official + multiple community signals</b></li>
+        <li>relevance: <b>on your path · ~120 m ahead · reroute advised</b></li>
+        <li class="muted">condensed from 5 signals · AI-generated · human-reviewable · Premium, toggleable</li>
+      </div>
+    </div>
+  </div></section>
+
+  <!-- 4b · ITERATION (framework → detail, live embeds) -->
+  <section class="slide"><div class="inner">
+    <div class="kicker">How it was built</div>
+    <h2>Framework first, then detail — layer by layer</h2>
+    <p class="lead" style="font-size:15px;margin-bottom:2px">I had the AI generate one <b>runnable framework</b> — the whole journey end-to-end, even with fake data — then added real depth one piece at a time. Both versions run live below:</p>
+    <div class="demorow">
+      <div><div class="phone sm"><iframe src="iter-before.html" title="First framework"></iframe></div><div class="democap"><b>First framework</b> — fake straight route + one scripted reroute</div></div>
+      <div><div class="phone sm"><iframe src="iter-after.html" title="After iteration"></iframe></div><div class="democap"><b>After iteration</b> — real routing · live LLM · invite &amp; realtime</div></div>
+    </div>
+    <p class="lead" style="font-size:14px;margin-top:14px"><b>The process:</b> get the journey running first (even faked), then swap each piece for the real thing — <b>synthetic route → real routing</b>, <b>scripted event → live LLM</b>, <b>one device → two-device realtime</b> — verifying every layer before the next.</p>
+  </div></section>
+
+  <!-- 5 · JUDGMENT & REALITY -->
+  <section class="slide"><div class="inner">
+    <div class="kicker">Product judgment &amp; reality</div>
+    <h2>What I deliberately didn't build — and what production demands</h2>
+    <div class="grid">
+      <div class="card">
+        <h3><span class="dot r"></span> Chose not to build</h3>
+        <p style="margin-bottom:8px"><b>ML area risk-prediction — rejected.</b> Crime data encodes policing bias; predicting “this area is risky” is algorithmic <b>redlining</b>. AI stays on specific, real-time incidents — no area/demographic profiling.</p>
+        <p style="margin-bottom:8px"><b>Registered addresses — gated.</b> Public data, but opt-in, off by default, no names, de-alarmed, “not proof of danger.”</p>
+        <p><b>Driving mode — cut.</b> Can't out-navigate Google; focused on the pedestrian wedge it ignores.</p>
+      </div>
+      <div class="card blue">
+        <h3><span class="dot b"></span> MVP → production, honestly</h3>
+        <p style="margin-bottom:8px"><b>Prototype stack:</b> a web app with a <b>server-side AI layer</b>, <b>realtime shared state</b>, and a <b>lightweight rules engine</b> for geofencing / relevance / safety thresholds.</p>
+        <p><b>Harder in production:</b> native app support for background location + push; trusted incident pipelines; moderation &amp; false-positive handling; scoped auth, consent &amp; retention; and a <b>model strategy — hosted, in-house, or on-device — based on latency, cost, privacy &amp; safety</b>.</p>
+      </div>
+    </div>
+    <div class="big-quote" style="margin-top:20px">Real, working, deployed — with AI placed where it <span class="hl">earns its value</span> and kept out of where it's <span class="hl">dangerous</span>.</div>
+  </div></section>
+
+  <!-- ===== APPENDIX (backup — for questions) ===== -->
+  <section class="slide divider"><div class="inner" style="text-align:center">
+    <div class="kicker" style="justify-content:center;color:var(--amber)">Appendix</div>
+    <h2>Backup slides — for questions</h2>
+    <p class="lead" style="margin:0 auto">The build process, architecture detail, and metrics — here if you want to go deeper.</p>
+  </div></section>
+
+  <!-- A · REAL PROCESS 1 -->
+  <section class="slide"><div class="inner">
+    <div class="kicker">Appendix · designing the MVP · 1 / 2</div>
+    <h2>The core design conversation — building Guardian</h2>
+    <p class="lead" style="font-size:14px;margin-bottom:2px">Paraphrased from the real back-and-forth. My decisions &amp; questions in <span style="color:#a9c6ff">blue</span>; I tend to check the constraints before proposing.</p>
+    <div class="chat">
+      <div class="msg user"><div class="who">Me</div>Citizen has all these safety tools but they're scattered — you set each one up separately. What if we unify them: one tap that runs the safe route, live sharing and monitoring together?</div>
+      <div class="msg ai"><div class="who">Claude</div>Framed that as Guardian — a one-tap proactive companion.</div>
+      <div class="msg user"><div class="who">Me</div>should we do a driving mode too, or is that a losing fight against google maps?</div>
+      <div class="msg ai"><div class="who">Claude</div>I'd skip driving — you can't out-navigate Google/Waze, and drivers are lower-risk. The defensible wedge is the pedestrian moment they ignore, so I'd scope it to walking.</div>
+      <div class="msg user"><div class="who">Me</div>yeah that makes sense — walking only then</div>
+      <div class="msg user"><div class="who">Me</div>for the routing… we can't actually <i>guarantee</i> a safe path right? google maps recalculates. so maybe pass it a waypoint and call it “safer route”, not “guaranteed”</div>
+      <div class="msg ai"><div class="who">Claude</div>Built the waypoint handoff with that honest framing + an upfront disclaimer.</div>
+      <div class="msg user"><div class="who">Me</div>wait though — why would anyone use this over google maps' own rerouting?</div>
+      <div class="msg ai"><div class="who">Claude</div>Different objective — Maps optimizes for time and ignores non-traffic personal-safety incidents. Guardian routes around those.</div>
+      <div class="msg user"><div class="who">Me</div>i don't want a clickable mockup — can it actually run? read my location, simulate the walk, and show the AI actually reacting</div>
+      <div class="msg ai"><div class="who">Claude</div>Built the live app — geolocation + compressed sim-time + a risk engine that reroutes.<div class="act">↳ <b>guardian.html</b></div></div>
+      <div class="msg user"><div class="who">Me</div>this route cuts through houses — that's not how streets work</div>
+      <div class="msg ai"><div class="who">Claude</div>Switched to real street routing (OSRM) with a fallback.</div>
+    </div>
+  </div></section>
+
+  <!-- A · REAL PROCESS 2 -->
+  <section class="slide"><div class="inner">
+    <div class="kicker">Appendix · designing the MVP · 2 / 2</div>
+    <h2>The AI, ethics &amp; privacy decisions</h2>
+    <div class="chat">
+      <div class="msg user"><div class="who">Me</div>ok real question — where's the AI actually used here? feels mostly like rules</div>
+      <div class="msg ai"><div class="who">Claude</div>Honest: routing &amp; geofencing are deliberately rules (you don't want an LLM hallucinating a reroute). The AI does what rules can't — read messy human reports + scanner chatter into a calm, classified signal.<div class="act">↳ <b>DeepSeek</b> via a serverless function, key server-side</div></div>
+      <div class="msg user"><div class="who">Me</div>the risk-prediction idea though… predicting “risky areas” — isn't that basically discrimination?</div>
+      <div class="msg ai"><div class="who">Claude</div>You're right — rejected ML area-prediction as algorithmic redlining; kept AI to specific, real-time incidents only.</div>
+      <div class="msg user"><div class="who">Me</div>citizen surfaces registered offenders too… if we use that it has to be opt-in, no names, and make clear a listing isn't proof of danger</div>
+      <div class="msg ai"><div class="who">Claude</div>Gated it exactly that way — opt-in, off by default, de-alarmed, no names, with the caveat.</div>
+      <div class="msg user"><div class="who">Me</div>SOS has to be manual — never auto-send my location to 911, that's a privacy line. and add a check-in: every few min i confirm “i'm ok”; only if i miss it, warn my contacts</div>
+      <div class="msg ai"><div class="who">Claude</div>Manual SOS confirm with clear consent; added the timed check-in.</div>
+      <div class="msg user"><div class="who">Me</div>can people watch me live if i share a link? generate it when i start, with a waiting screen showing who joined, then i walk</div>
+      <div class="msg ai"><div class="who">Claude</div>Built the invite link + join/wait screen — real names &amp; count, “X joined” alerts.</div>
+      <div class="msg user"><div class="who">Me</div>the watcher should also see if i rerouted, my current route, and a history — and let people join mid-walk. why supabase for this and not just vercel?</div>
+      <div class="msg ai"><div class="who">Claude</div>Watcher shows the live route (updates on reroute) + an activity/route history; mid-walk joins supported. Vercel is stateless — Supabase Realtime is the shared state two phones need.<div class="act">↳ two-device realtime on <b>Supabase</b></div></div>
+    </div>
+  </div></section>
+
+  <!-- A · ARCHITECTURE -->
+  <section class="slide"><div class="inner">
+    <div class="kicker">Appendix · architecture</div>
+    <h2>How the pieces fit</h2>
+    <div class="arch">
+      <div class="archbox"><div class="t">Vercel — host + compute</div><ul>
+        <li>Serves guardian.html / watch.html</li>
+        <li><b>Serverless function</b> calls the LLM — key stays server-side</li>
+        <li>Stateless: can't hold data or push realtime</li>
+      </ul></div>
+      <div class="archbox"><div class="t">Supabase — realtime state</div><ul>
+        <li>Postgres + Realtime channels</li>
+        <li>Live location, incident injection, watchers, event feed</li>
+        <li>The two-device job a function can't do</li>
+      </ul></div>
+      <div class="archbox"><div class="t">OSRM + DeepSeek</div><ul>
+        <li><b>OSRM</b>: free real street routing</li>
+        <li><b>DeepSeek</b>: LLM incident understanding</li>
+        <li>Leaflet + CartoDB dark tiles for the map</li>
+      </ul></div>
+    </div>
+    <p class="muted" style="margin-top:16px;font-size:13.5px"><b>In one line:</b> Vercel = hosting + the LLM function; Supabase = realtime shared state between two phones; OSRM = real routes; DeepSeek = the AI understanding.</p>
+  </div></section>
+
+  <!-- A · METRICS -->
+  <section class="slide"><div class="inner">
+    <div class="kicker">Appendix · how I'd measure it</div>
+    <h2>Trust first — retention &amp; safety, not vanity</h2>
+    <div class="grid">
+      <div class="card"><h3>Trust &amp; retention</h3><p>D7/D30 retention; % new users who complete a Guardian walk; notification opt-out &amp; uninstall (should fall); “helps me feel safer” CSAT.</p></div>
+      <div class="card"><h3>Engagement quality</h3><p>Guardian walks/user; watchers per walk; reroute-accept rate; check-in completion.</p></div>
+      <div class="card"><h3>AI safety</h3><p>Summary correction/dispute rate; % AI surfaces with disclosure viewed; false-positive reroutes.</p></div>
+      <div class="card"><h3>Business</h3><p>Free→Premium conversion &amp; churn — thesis: trust-led free <i>raises</i> LTV.</p></div>
+    </div>
+  </div></section>
+
+</div>
+
+<div class="nav">
+  <div class="dots" id="dots"></div>
+  <div class="ctrl">
+    <button onclick="go(cur-1)">‹</button>
+    <span class="count" id="count">1 / 5</span>
+    <button onclick="go(cur+1)">›</button>
+  </div>
+</div>
+
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  const CORE=5; // first 5 are the talk (demo happens live from slide 1); the rest are appendix/backup
+  const dots=document.getElementById('dots'), count=document.getElementById('count');
+  let cur=0;
+  slides.forEach(function(_,i){ const d=document.createElement('div'); d.className='d'+(i===0?' on':'')+(i>=CORE?' appx':''); d.onclick=function(){go(i);}; dots.appendChild(d); });
+  const ds=[...dots.children];
+  function label(i){ return i<CORE ? ((i+1)+' / '+CORE) : ('Appendix '+(i-CORE+1)); }
+  count.textContent=label(0);
+  function go(i){ i=Math.max(0,Math.min(slides.length-1,i)); slides[cur].classList.remove('active'); ds[cur].classList.remove('on');
+    cur=i; slides[cur].classList.add('active'); ds[cur].classList.add('on'); count.textContent=label(cur); slides[cur].scrollTop=0; }
+  document.addEventListener('keydown',function(e){ if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' ')go(cur+1); if(e.key==='ArrowLeft'||e.key==='PageUp')go(cur-1); });
+  let sx=0; document.addEventListener('touchstart',function(e){sx=e.touches[0].clientX;},{passive:true});
+  document.addEventListener('touchend',function(e){ const dx=e.changedTouches[0].clientX-sx; if(Math.abs(dx)>60){ go(cur+(dx<0?1:-1)); } },{passive:true});
+</script>
+</body>
+</html>

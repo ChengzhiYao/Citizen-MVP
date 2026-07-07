@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Guardian — v1 skeleton</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+  *{box-sizing:border-box;margin:0}
+  html,body{height:100%;background:#000;font-family:-apple-system,Segoe UI,Roboto,sans-serif;overflow:hidden}
+  #app{position:relative;width:100vw;height:100vh}
+  #map{position:absolute;inset:0;background:#0a0d13}
+  .top{position:absolute;top:0;left:0;right:0;z-index:20;padding:14px 16px;color:#e7e9ee;font-weight:700;font-size:15px;
+    background:linear-gradient(180deg,rgba(0,0,0,.7),transparent)}
+  .bar{position:absolute;left:0;right:0;bottom:0;z-index:20;padding:16px;background:linear-gradient(0deg,#0b0d13,transparent)}
+  .card{background:#14161c;border:1px solid #262a33;border-radius:14px;padding:14px}
+  .card .t{color:#f3f4f7;font-weight:700;font-size:15px}
+  .card .s{color:#9aa0ab;font-size:12.5px;margin-top:2px}
+  .btn{display:block;width:100%;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;
+    font-family:inherit;background:#2f6bff;color:#fff;margin-top:10px}
+  .btn.ghost{background:#1b1e25;color:#cfd3da}
+  .row{display:flex;gap:10px}.row .btn{margin-top:0}
+  .meMk{width:18px;height:18px;border-radius:50%;background:#2f6bff;border:3px solid #fff;box-shadow:0 0 0 6px rgba(47,107,255,.25)}
+  .inc{width:30px;height:30px;border-radius:50%;background:#1d0f0c;border:2px solid #ff453a;display:flex;align-items:center;justify-content:center;color:#ff8078;font-weight:800}
+  .home{width:28px;height:28px;border-radius:50%;background:#0c1726;border:2px solid #2f6bff;display:flex;align-items:center;justify-content:center;color:#7da6ff}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="map"></div>
+  <div class="top">Guardian · v1</div>
+  <div class="bar" id="bar"></div>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+function lerp(a,b,t){return [a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t]}
+function densify(pts,per){const o=[];for(let i=0;i<pts.length-1;i++)for(let s=0;s<per;s++)o.push(lerp(pts[i],pts[i+1],s/per));o.push(pts[pts.length-1]);return o}
+const S={start:[40.7305,-73.7920],idx:0,phase:'idle',timer:null,layers:{}};
+S.dest=[S.start[0]+0.006,S.start[1]+0.004];
+// deliberately synthetic straight-ish route (the "fake" v1 routing)
+S.route=densify([S.start,[S.start[0]+0.002,S.start[1]+0.0018],[S.start[0]+0.004,S.start[1]+0.0016],S.dest],10);
+S.pos=S.route[0];
+S.inc=[S.start[0]+0.0034,S.start[1]+0.0015];
+const map=L.map('map',{zoomControl:false,attributionControl:false}).setView(S.start,16);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:20}).addTo(map);
+function dIcon(h,s){return L.divIcon({html:h,className:'',iconSize:[s,s],iconAnchor:[s/2,s/2]})}
+function draw(){
+  S.layers.route=L.polyline(S.route,{color:'#2f6bff',weight:6,opacity:.95}).addTo(map);
+  S.layers.home=L.marker(S.dest,{icon:dIcon('<div class="home">⌂</div>',28)}).addTo(map);
+  S.layers.me=L.marker(S.pos,{icon:dIcon('<div class="meMk"></div>',18),zIndexOffset:1000}).addTo(map);
+  map.fitBounds(S.layers.route.getBounds().pad(0.4));
+}
+function idle(){ document.getElementById('bar').innerHTML=
+  '<div class="card"><div class="t">Walk home</div><div class="s">A basic escorted walk with one safety check.</div>'+
+  '<button class="btn" onclick="start()">Start walk</button></div>'; }
+function walking(){ const pct=Math.round(S.idx/(S.route.length-1)*100);
+  document.getElementById('bar').innerHTML='<div class="card"><div class="t">Walking… '+pct+'%</div><div class="s">Watching your route.</div></div>'; }
+function start(){ S.phase='active'; S.done=false; walking(); S.timer=setInterval(tick,500); }
+function tick(){
+  if(S.phase==='intervene')return;
+  S.idx++;
+  if(S.idx>=S.route.length-1){ clearInterval(S.timer); arrive(); return; }
+  S.pos=S.route[S.idx]; S.layers.me.setLatLng(S.pos); map.panTo(S.pos,{animate:true,duration:.4});
+  if(!S.done && S.idx>=Math.round(S.route.length*0.4)){ S.done=true; hazard(); } else walking();
+}
+function hazard(){
+  S.phase='intervene';
+  if(!S.layers.inc) S.layers.inc=L.marker(S.inc,{icon:dIcon('<div class="inc">!</div>',30),zIndexOffset:900}).addTo(map);
+  document.getElementById('bar').innerHTML=
+    '<div class="card"><div class="t">⚠ Hazard ahead</div><div class="s">An incident is on your route. Reroute around it?</div>'+
+    '<div class="row" style="margin-top:10px"><button class="btn" onclick="reroute()">Reroute</button>'+
+    '<button class="btn ghost" onclick="keep()">Keep going</button></div></div>';
+}
+function reroute(){
+  const via=[S.inc[0]-0.0015,S.inc[1]+0.002];
+  const det=densify([S.pos,via,S.dest],10);
+  if(S.layers.route)S.layers.route.setStyle({color:'#3a3f48',dashArray:'2 8',opacity:.5});
+  S.layers.det=L.polyline(det,{color:'#30d158',weight:6}).addTo(map);
+  S.route=det; S.idx=0; S.pos=S.route[0]; S.phase='active'; walking();
+}
+function keep(){ S.phase='active'; walking(); }
+function arrive(){ S.phase='done'; S.layers.me.setLatLng(S.dest);
+  document.getElementById('bar').innerHTML='<div class="card"><div class="t">You made it ✓</div><div class="s">Arrived safely.</div>'+
+  '<button class="btn" onclick="location.reload()">Run again</button></div>'; }
+draw(); idle();
+// In an iframe the map container often gets its real size AFTER init, which makes Leaflet fall back to a world view.
+// Poll until the container actually has a size, then recompute + fit. Stops on first success.
+function fit(){
+  try{
+    map.invalidateSize();
+    var c=map.getContainer();
+    if(c.clientWidth>2 && c.clientHeight>2 && S.layers.route){
+      map.fitBounds(S.layers.route.getBounds().pad(0.35),{animate:false});
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+var _n=0,_iv=setInterval(function(){ if(fit()||++_n>60) clearInterval(_iv); },100);
+window.addEventListener('resize',fit);
+setTimeout(function(){ if(S.phase==='idle') start(); }, 1800); // auto-run so the embed shows it actually working
+</script>
+</body>
+</html>

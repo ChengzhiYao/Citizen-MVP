@@ -135,6 +135,15 @@
   .aiblk .aitxt b{color:#efe9ff}
   .aiblk .aimeta{color:#a89fce;font-size:11px;margin-top:6px;text-transform:capitalize}
   .aiblk .aisrc{color:#7f77ad;font-size:10.5px;margin-top:4px}
+  /* raw reports shown when AI summaries are OFF — the messy feed you sift yourself */
+  .rawbadge{display:inline-flex;align-items:center;gap:5px;background:#191b22;border:1px solid #2a2d35;color:#aeb3bc;font-size:10px;font-weight:700;padding:4px 9px;border-radius:999px;letter-spacing:.05em;white-space:nowrap}
+  .rawbadge .ic{font-size:12px}
+  .rawblk{background:#0c0d12;border:1px solid #23262e;border-radius:11px;padding:10px 12px;margin:11px 0 0}
+  .rawhd{font-size:10px;font-weight:700;color:#8b9098;text-transform:uppercase;letter-spacing:.05em;display:flex;align-items:center;gap:6px;margin-bottom:7px}
+  .rawhd .ic{font-size:12px}
+  .rawitem{font-size:12.5px;color:#c4c8d0;line-height:1.45;padding:6px 0;border-bottom:1px solid #191b21}
+  .rawitem:last-of-type{border-bottom:none}
+  .rawnote{font-size:11px;color:#7c818b;font-style:italic;margin-top:8px;line-height:1.45}
   .sharebox{display:flex;align-items:center;gap:8px;background:#101117;border:1px solid #2a2d35;border-radius:12px;padding:10px 8px 10px 13px;margin-top:4px}
   .sharebox .url{flex:1;font-size:12.5px;color:#8fb4ff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:monospace}
   .btn-mini{background:var(--blue);color:#fff;border:none;border-radius:9px;padding:8px 12px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:5px;white-space:nowrap}
@@ -201,7 +210,7 @@
 
   /* AI intervention card */
   .interv{position:absolute;left:16px;right:16px;bottom:calc(var(--navh) + 12px);z-index:40;background:#100d1f;border:1px solid #372e6b;
-    border-radius:22px;padding:18px;box-shadow:0 24px 60px rgba(0,0,0,.6);display:none;animation:up .3s ease}
+    border-radius:22px;padding:18px;box-shadow:0 24px 60px rgba(0,0,0,.6);display:none;animation:up .3s ease;max-height:calc(100dvh - 150px);overflow-y:auto}
   .interv.show{display:block}
   @keyframes up{from{transform:translateY(30px);opacity:.3}to{transform:none;opacity:1}}
   .interv .hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
@@ -397,6 +406,7 @@
 const SUPA_URL='https://foazjihpcfzrjdvnlpqg.supabase.co';
 const SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZvYXpqaWhwY2Z6cmpkdm5scHFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzNTMzOTYsImV4cCI6MjA5ODkyOTM5Nn0.DecB0rT9ueM3JevF-FVFjm1FOzw39KD1KcU9Q6Ksxjc';
 const LIVE=true;
+const EMBED = new URLSearchParams(location.search).has('embed'); // clean state when shown inside the deck's iframe
 function sessCode(){ return (typeof S!=='undefined' && S.code) ? S.code : 'DEMO'; }
 let sb=null;
 try{ if(LIVE && window.supabase && window.supabase.createClient){ sb=window.supabase.createClient(SUPA_URL,SUPA_ANON); } }catch(e){ console.warn('supabase init failed',e); }
@@ -635,20 +645,36 @@ function triggerIntervention(inc){
   const head=inc.headline||('Hazard '+dist+' m ahead');
   const detail=inc.detail||('Reported on '+(inc.street||'the block ahead')+' — on your current path.');
   const why=inc.why||('high-severity + confirmed');
-  const aiblk = (inc.reports && inc.reports.length && CFG.aiSummary) ?
-    ('<div class="aiblk" id="aiblk"><span class="aibadge">'+ic('spark',12)+' AI READING '+inc.reports.length+' REPORTS…</span><div class="aitxt" id="aitxt">Condensing the raw reports into what matters…</div></div>') : '';
+  const hasReports = inc.reports && inc.reports.length;
+  const aiOn = hasReports && CFG.aiSummary;
+  // Header badge reflects whether AI is doing the reading, or you are.
+  const headBadge = aiOn
+    ? '<span class="aibadge">'+ic('spark',12)+' GUARDIAN AI</span>'
+    : (hasReports ? '<span class="rawbadge">'+ic('msg',12)+' '+inc.reports.length+' RAW REPORTS</span>' : '');
+  // Body: AI condenses the reports, OR (AI off) you get the raw feed to sift yourself.
+  let block='';
+  if(aiOn){
+    block='<div class="aiblk" id="aiblk"><span class="aibadge">'+ic('spark',12)+' AI READING '+inc.reports.length+' REPORTS…</span><div class="aitxt" id="aitxt">Condensing the raw reports into what matters…</div></div>';
+  } else if(hasReports){
+    block='<div class="rawblk"><div class="rawhd">'+ic('msg',12)+' '+inc.reports.length+' unverified reports · you read these yourself</div>'+
+      inc.reports.map(function(r){return '<div class="rawitem">“'+r+'”</div>';}).join('')+
+      '<div class="rawnote">AI summaries are off — Guardian isn\'t condensing, classifying, or de-duping these for you.</div></div>';
+  }
+  const caveat = aiOn
+    ? 'AI can be wrong — trust what you see; call 911 in an emergency.'
+    : 'These are raw, unverified user reports — judge them yourself; call 911 in an emergency.';
   document.getElementById('interv').innerHTML=
-    '<div class="hd"><span class="warn" style="color:'+(reg?'#b9aee6':'#ff9f97')+'">'+ic(reg?'home':'alert',15)+' '+kind+'</span><span class="aibadge">'+ic('spark',12)+' GUARDIAN AI</span></div>'+
+    '<div class="hd"><span class="warn" style="color:'+(reg?'#b9aee6':'#ff9f97')+'">'+ic(reg?'home':'alert',15)+' '+kind+'</span>'+headBadge+'</div>'+
     '<h3>'+head+'</h3>'+
-    aiblk+
-    '<div class="why"><b>Why I\'m telling you:</b> '+why+', within '+dist+' m ahead of you. I found a detour on a nearby street (+~2 min). <i>AI can be wrong — trust what you see; call 911 in an emergency.</i></div>'+
+    block+
+    '<div class="why"><b>Why I\'m telling you:</b> '+why+', within '+dist+' m ahead of you. I found a detour on a nearby street (+~2 min). <i>'+caveat+'</i></div>'+
     '<button class="btn btn-white" onclick="reroute()">'+ic('nav',17)+' Reroute — safer street</button>'+
     '<div style="height:8px"></div>'+
     '<button class="btn btn-ghost" onclick="keepGoing()">Keep my route</button>';
   document.getElementById('interv').classList.add('show');
   setNote('⚠ Incident on the path — '+head+'. Guardian flagged it; deciding whether to reroute.');
   logEvent('incident', head+' detected on the path ('+dist+' m ahead).');
-  if(aiblk) aiSummarize(inc, dist);
+  if(aiOn) aiSummarize(inc, dist);
 }
 async function aiSummarize(inc, dist){
   const el=document.getElementById('aitxt'); if(!el) return;
@@ -1011,7 +1037,7 @@ function filterControlsHTML(){
 function togType(k,el){CFG.filters.types[k]=!CFG.filters.types[k];el.classList.toggle('on');}
 function setF(field,v,el){CFG.filters[field]=v;el.parentElement.querySelectorAll('button').forEach(function(b){b.classList.remove('on');});el.classList.add('on');}
 function setCI(v,el){CFG.checkin=v;el.parentElement.querySelectorAll('button').forEach(function(b){b.classList.remove('on');});el.classList.add('on');}
-function togAI(el){CFG.aiSummary=!CFG.aiSummary;el.classList.toggle('on');}
+function togAI(el){CFG.aiSummary=!CFG.aiSummary;el.classList.toggle('on');saveCfg();}
 function openFilters(){var f=document.getElementById('filtersScreen');f.classList.add('show');
   f.innerHTML='<div class="ob-top"><div class="ob-prog"></div><button class="ob-skip" onclick="closeFilters()">Done</button></div>'+
   '<div class="ob-body"><h2>Settings</h2><p class="sub">What Guardian monitors, when it interrupts you, and your check-in timer.</p>'+filterControlsHTML()+'</div>'+
@@ -1048,10 +1074,29 @@ function sendSOS(){closeSOS();toast('SOS sent — location shared with your cont
 /* ---------- boot ---------- */
 async function boot(center,fromReal){
   loadCfg();
+  if(EMBED){ markSeen('idlehint'); markSeen('planhint'); } // hide onboarding coach-marks in the deck embed
   S.start=center;
   initMap(center);
   await buildScenario(); drawBase(); renderIdle();
-  if(!fromReal){
+  // Leaflet renders a world map when its container sizes after init (common in iframes).
+  // Poll until the container truly has a size, then recompute + fit to the planned route. Stops on first success.
+  if(EMBED){
+    var _n=0,_iv=setInterval(function(){
+      try{
+        S.map.invalidateSize();
+        var c=S.map.getContainer();
+        if(c.clientWidth>2 && c.clientHeight>2){
+          if(S.layers&&S.layers.route) S.map.fitBounds(S.layers.route.getBounds().pad(0.35),{animate:false});
+          clearInterval(_iv);
+        }
+      }catch(e){}
+      if(++_n>60) clearInterval(_iv);
+    },100);
+    window.addEventListener('resize',function(){ try{S.map.invalidateSize();}catch(e){} });
+  } else {
+    setTimeout(function(){ try{S.map.invalidateSize();}catch(e){} },300);
+  }
+  if(!fromReal && !EMBED){
     const b=document.getElementById('banner');
     b.innerHTML=ic('pin',14)+' Using a demo location (New York). Allow location, or run over https/localhost, to center on you.';
     b.classList.add('show'); setTimeout(()=>b.classList.remove('show'),6000);

@@ -1,0 +1,49 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<title>Guardian — v1</title>
+<style>
+  *{box-sizing:border-box;margin:0}
+  html,body{height:100%;background:#000;font-family:"Inter",-apple-system,Segoe UI,Roboto,sans-serif;overflow:hidden;color:#e7e9ee}
+  #app{position:relative;width:100%;height:100%;overflow:hidden;background:#0a0d13}
+  #map{position:absolute;inset:0}
+  .top{position:absolute;top:0;left:0;right:0;z-index:20;padding:12px 14px;font-weight:700;font-size:15px;background:linear-gradient(180deg,rgba(0,0,0,.7),transparent)}
+  .ic{width:1em;height:1em;display:inline-block;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.14em}
+  .mk{position:absolute;transform:translate(-50%,-50%)}
+  .me{width:15px;height:15px;border-radius:50%;background:#2f6bff;border:3px solid #fff;box-shadow:0 0 0 6px rgba(47,107,255,.22)}
+  .inc{width:24px;height:24px;border-radius:50%;background:#1d0f0c;border:2px solid #ff453a;display:flex;align-items:center;justify-content:center;color:#ff8078;font-weight:800;font-size:13px}
+  .home{width:22px;height:22px;border-radius:50%;background:#0c1726;border:2px solid #2f6bff;display:flex;align-items:center;justify-content:center;color:#7da6ff;font-size:12px}
+  /* the SAME decision card — plain framework version (no AI, no chrome) */
+  .card{position:absolute;left:12px;right:12px;bottom:14px;z-index:40;background:#14161c;border:1px solid #262a33;border-radius:18px;padding:13px}
+  .warn{display:inline-flex;align-items:center;gap:6px;color:#f3f4f7;font-size:13.5px;font-weight:700}
+  .sub{color:#9aa0ab;font-size:12px;margin:6px 0 0;line-height:1.4}
+  .row{display:flex;gap:9px;margin-top:11px}
+  .btn{flex:1;border:none;border-radius:11px;padding:11px;font-size:12.5px;font-weight:700;font-family:inherit;background:#2f6bff;color:#fff}
+  .btn.ghost{background:#1b1e25;color:#cfd3da}
+</style></head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs>
+  <symbol id="g-alert" viewBox="0 0 24 24"><path d="M10.3 3.9 2 18a2 2 0 0 0 1.7 3h16.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></symbol>
+  <symbol id="g-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 9.5V20h14V9.5"/><path d="M9.5 20v-6h5v6"/></symbol>
+</defs></svg>
+<div id="app">
+  <!-- same framework: map with route + incident. But the route is a fake straight line, ignoring the streets. -->
+  <svg id="map" viewBox="0 0 262 542" preserveAspectRatio="xMidYMid slice">
+    <rect width="262" height="542" fill="#0a0d13"/>
+    <g stroke="#171b23" stroke-width="9"><path d="M-10 150 H272"/><path d="M-10 300 H272"/><path d="M-10 430 H272"/><path d="M96 -10 V552"/><path d="M180 -10 V552"/></g>
+    <g stroke="#12151c" stroke-width="4"><path d="M-10 75 H272"/><path d="M-10 225 H272"/><path d="M-10 365 H272"/><path d="M55 -10 V552"/><path d="M135 -10 V552"/><path d="M225 -10 V552"/></g>
+    <path d="M131 472 L131 92" fill="none" stroke="#2f6bff" stroke-width="6" stroke-linecap="round"/>
+  </svg>
+  <div class="mk" style="left:50%;top:87%"><div class="me"></div></div>
+  <div class="mk" style="left:50%;top:35%"><div class="inc">!</div></div>
+  <div class="mk" style="left:50%;top:17%"><div class="home"><svg class="ic"><use href="#g-home"/></svg></div></div>
+
+  <div class="top">Guardian · v1</div>
+
+  <div class="card">
+    <span class="warn"><svg class="ic" style="font-size:15px"><use href="#g-alert"/></svg> Hazard ahead</span>
+    <p class="sub">An incident is on your route. Reroute around it?</p>
+    <div class="row"><button class="btn">Reroute</button><button class="btn ghost">Keep going</button></div>
+  </div>
+</div>
+</body></html>
