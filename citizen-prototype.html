@@ -335,6 +335,27 @@
   .cmp .after .lab{color:#54d18a}
   .cmp ul{margin:0;padding-left:18px;color:#c0c5ce;font-size:13px;line-height:1.65}
   .cmp .col p{margin:0 0 9px;color:#a4a9b2;font-size:13px;line-height:1.5}
+  .cmp .shots{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:0 0 11px}
+  .cmp .shots figure{margin:0}
+  .cmp .shots img{width:100%;border-radius:10px;border:1px solid #262a33;display:block;background:#000}
+  .cmp .shots figcaption{font-size:10.5px;color:#9aa0ab;margin-top:5px;line-height:1.35}
+  .cmp .rl{display:inline-block;font-size:9px;font-weight:700;color:#7c818b;background:#191b22;border:1px solid #2a2d35;padding:2px 7px;border-radius:999px;margin-left:7px;letter-spacing:.02em;text-transform:none;vertical-align:2px}
+  .cmp .walk{display:flex;flex-direction:column;gap:14px}
+  .cmp .wstep{display:flex;gap:16px;align-items:flex-start;background:#070809;border:1px solid #1b1d24;border-radius:14px;padding:14px}
+  .cmp .wstep img{width:280px;flex:0 0 280px;border-radius:12px;border:1px solid #262a33;display:block;background:#000}
+  .cmp .wstep .wtxt{flex:1;min-width:0}
+  .cmp .wstep .wnum{font-size:10px;font-weight:800;letter-spacing:.06em;color:#9bb4ff;text-transform:uppercase}
+  .cmp .wstep h4{margin:5px 0 7px;font-size:15px;font-weight:700;color:#f3f4f7}
+  .cmp .wstep p{margin:0 0 9px;color:#a4a9b2;font-size:13px;line-height:1.5}
+  .cmp .wstep .pain{color:#e6b24a;font-size:12.5px;line-height:1.5;background:#1a1405;border:1px solid #4a3a10;border-radius:9px;padding:8px 10px}
+  .cmp .wstep .pain b{color:#f0d79a}
+  .cmp .wstep .opp{color:#8fe0ac;font-size:12.5px;line-height:1.5;background:#0c1a12;border:1px solid #1f5234;border-radius:9px;padding:8px 10px;margin-top:8px}
+  .cmp .wstep .opp b{color:#c9f5db}
+  .cmp .thesis{font-size:14.5px;line-height:1.6;color:#dfe2e8;background:#0c0f1c;border:1px solid #24407a;border-radius:12px;padding:14px 16px;margin:0 0 14px}
+  .cmp .thesis b{color:#bcd2ff}
+  .cmp .conclusion{font-size:14.5px;line-height:1.65;color:#eafff3;background:#0c1a12;border:1px solid #1f5234;border-radius:12px;padding:14px 16px;margin:16px 0 0}
+  .cmp .conclusion b{color:#c9f5db}
+  @media(max-width:680px){.cmp .wstep{flex-direction:column;align-items:center}.cmp .wstep img{width:100%;max-width:300px;flex:0 0 auto}.cmp .wstep .wtxt{width:100%}}
   @media(max-width:680px){.cmp{grid-template-columns:1fr}}
   .hidden{display:none!important}
 </style>
@@ -973,30 +994,48 @@
 
   <!-- ===================== BEFORE / AFTER ===================== -->
   <div id="compare">
-    <div class="cmp">
-      <h3>1 · Subscription: hard wall → optional</h3>
-      <div class="col before"><div class="lab">Before</div>
-        <p>Profile leads with a large "Upgrade to Premium — gain access to all of Citizen." Safety Network shows a lock. Alerts customization sits behind a Premium banner.</p>
-        <ul><li>Implies core safety is paywalled</li><li>FOMO-driven, erodes trust on a safety app</li><li>New users bounce before first value</li></ul>
+    <div class="cmp" style="grid-template-columns:1fr">
+      <h3>0 · Citizen already has a family safety layer — here's where it falls short <span class="rl">real app screenshots · walk through one by one</span></h3>
+      <p class="thesis">Citizen already has the <b>ingredients</b> of a family safety product — trusted contacts, alert zones, location sharing, and nearby danger signals. But today they mostly operate as <b>passive settings and notifications</b>. The opportunity is to turn them into an <b>active protection loop</b>.</p>
+      <div class="walk">
+
+        <div class="wstep">
+          <img src="screenshot%20for%20orignal%20app/42699989eca37e158fa2619823dd0b0.jpg" alt="Citizen Profile screen" loading="lazy">
+          <div class="wtxt">
+            <div class="wnum">01 · Where the safety tools live (high level)</div>
+            <h4>The safety layer exists — but it's hidden inside setup screens</h4>
+            <p>Safety Network, Alert Zones, Friends and Location Sharing all live here as <b>static profile settings</b> — each one you set up manually, and then it just sits in the background.</p>
+            <div class="pain"><b>Pain point:</b> these tools are treated like <b>profile settings, not active safety moments</b>. You set them once, then rarely see how they help during a real <b>walk, commute, or night out</b> — they never come together into one <b>active safety experience</b>.</div>
+          </div>
+        </div>
+
+        <div class="wstep">
+          <img src="screenshot%20for%20orignal%20app/0c661e23b4f523959b4905b0bf73d14.jpg" alt="Citizen Nearby Activity" loading="lazy">
+          <div class="wtxt">
+            <div class="wnum">02 · Notifying the people who matter</div>
+            <h4>It can alert loved ones about danger near you</h4>
+            <p>"<b>Nearby Activity</b> — instant safety alerts when dangerous activity happens close to loved ones." It pings the people who care about you when something's up around you.</p>
+            <div class="pain"><b>Pain point:</b> it creates <b>awareness, but not intervention</b>. Loved ones get notified, but the product doesn't yet <b>guide the user toward a safer next step</b>.</div>
+            <div class="opp"><b>The opportunity:</b> turn alerts into a <b>protection flow</b> — check-in, reroute, share ETA, call a contact, or confirm "I'm safe."</div>
+          </div>
+        </div>
+
+        <div class="wstep">
+          <img src="screenshot%20for%20orignal%20app/8da87aef352e0b1932e6f9c38dfd7b1.jpg" alt="Citizen Registered Offenders" loading="lazy">
+          <div class="wtxt">
+            <div class="wnum">03 · Registered offenders</div>
+            <h4>It shows offenders near you or your loved ones</h4>
+            <p>"See offender details and get alerted if an offender registers near you or your loved one's location."</p>
+            <div class="pain"><b>Pain point:</b> the information is <b>high-emotion but low-action</b>. It may raise awareness, but without guidance, users may not know <b>what to do next</b>.</div>
+            <div class="opp"><b>The opportunity:</b> not to make users <b>stare at danger dots</b>, but to help them <b>adjust their routines</b> — avoid certain blocks, keep an eye on a loved one's area, or set alerts around <b>home, school, or work</b>.</div>
+          </div>
+        </div>
+
       </div>
-      <div class="col after"><div class="lab">After</div>
-        <p>Premium reframed as "Optional." A soft sheet lists genuine power-user extras; safety-critical features are explicitly "Always free." "Continue with free Citizen" is a first-class button.</p>
-        <ul><li>Trust-first → better retention → better conversion</li><li>Premium = real added value, not a hostage</li><li>Clear free vs paid line</li></ul>
-      </div>
+      <p class="conclusion"><b>The core issue:</b> Citizen currently sells access to <b>more safety information</b>. The stronger product opportunity is to offer an <b>active protection layer</b> — helping users and their loved ones know <b>what to do next</b>, not just what happened nearby. <span style="color:#7fb79a">(That's Guardian — and it's what the live demo shows.)</span></p>
     </div>
     <div class="cmp">
-      <h3>2 · Alerts: locked → fully customizable (free)</h3>
-      <div class="col before"><div class="lab">Before</div>
-        <p>"Customize your alerts — set a custom notification area and choose exactly the types you want" is a Premium upsell. Default = everything, citywide. Repeated pings.</p>
-        <ul><li>The core promise (right alert, right place) is gated</li><li>Drives the "Citizen makes me anxious" reputation</li><li>Users mute or uninstall instead of tuning</li></ul>
-      </div>
-      <div class="col after"><div class="lab">After</div>
-        <p>Free Alert filters: per-type toggles, distance radius, quiet hours, Calm mode (group repeats, mute non-critical overnight, life-safety always through).</p>
-        <ul><li>Signal the user chose, not a firehose</li><li>Directly counters the anxiety critique</li><li>Premium still sells multi-zone & history</li></ul>
-      </div>
-    </div>
-    <div class="cmp">
-      <h3>3 · New core: Walk With Me (同行守护)</h3>
+      <h3>1 · Walk With Me — one-tap live escort</h3>
       <div class="col before"><div class="lab">Before</div>
         <p>Safety Network, Friends and Location Sharing exist only as static profile settings showing "0" — passive, set-and-forget, rarely used in the moment.</p>
         <ul><li>No in-the-moment safety action</li><li>Network value invisible until an emergency</li></ul>
@@ -1007,62 +1046,7 @@
       </div>
     </div>
     <div class="cmp">
-      <h3>4 · New core: Trust & context layer (社区参与 / 可信度)</h3>
-      <div class="col before"><div class="lab">Before</div>
-        <p>Incidents show raw reports + view counts. No confidence signal, no personal relevance, no way for the crowd to resolve a stale alert.</p>
-        <ul><li>Unverified reports spread panic</li><li>Old alerts linger as if live</li></ul>
-      </div>
-      <div class="col after"><div class="lab">After</div>
-        <p>Each incident gets a confirmation/trust badge, Still-active / Resolved buttons that build reporter trust scores and auto-expire stale alerts.</p>
-        <ul><li>Calms instead of alarms</li><li>Self-cleaning, community-verified feed</li></ul>
-      </div>
-    </div>
-    <div class="cmp">
-      <h3>6 · Go Live: confusing → a transparent, end-to-end flow</h3>
-      <div class="col before"><div class="lab">Before</div>
-        <p>Tapping Go Live drops you straight onto a record screen. It never explains how long to record, what the upload steps are, whether anyone reviews it, where the video ends up, or how to find your past uploads.</p>
-        <ul><li>First-time users don't know what will happen</li><li>No confirmation of where the video went</li><li>No history of your own broadcasts anywhere</li></ul>
-      </div>
-      <div class="col after"><div class="lab">After</div>
-        <p>A clear 4-step flow: an upfront "how it works" model + length guidance → recording with a timer and safety prompt → a review screen that states anonymity, moderation, audience and location before posting → an upload pipeline (Uploaded → Safety review → Published) → a confirmation showing exactly where it went, plus a new "Your broadcasts" history with status chips.</p>
-        <ul><li>Every step says what happens next</li><li>Closes the loop: map + thread + saved history</li><li>Turns a confusing feature into a trustworthy one</li></ul>
-      </div>
-    </div>
-    <div class="cmp">
-      <h3>7 · News: one firehose → manual filters + a transparent AI filter</h3>
-      <div class="col before"><div class="lab">Before</div>
-        <p>News pushes everything in one undifferentiated stream — no category filters, no way to narrow by relevance or distance, and no explanation of why a given story is shown.</p>
-        <ul><li>Citywide noise drowns what matters to you</li><li>No manual control over the feed</li><li>Can't tell what's ranked vs. chronological</li></ul>
-      </div>
-      <div class="col after"><div class="lab">After</div>
-        <p>A segmented view (For you / Nearby / All) + scrollable category chips for manual control — all <b>free</b>. On top, a Premium <b>AI Smart Filter</b> auto-hides low-relevance citywide noise and labels <i>why</i> each item surfaced ("matches your commute," "within your alert radius"). Clean line: manual control is free; AI doing the work for you is the paid value-add. AI never hides safety-critical alerts.</p>
-        <ul><li>Free manual control; Premium AI auto-curation</li><li>Every item explains why it's there</li><li>Monetizes value-add, not basics</li></ul>
-      </div>
-    </div>
-    <div class="cmp">
-      <h3>8 · Premium: vague one-feature pitch → a clear value comparison</h3>
-      <div class="col before"><div class="lab">Before</div>
-        <p>The paywall sells a single feature ("listen to full police & fire radio clips") with two prices and no explanation of what else changes. It's impossible to tell what you actually get versus the free tier — it reads as untrustworthy.</p>
-        <ul><li>One feature shown; the rest is a mystery</li><li>No free-vs-paid comparison</li><li>Low trust → low considered conversion</li></ul>
-      </div>
-      <div class="col after"><div class="lab">After</div>
-        <p>A side-by-side Free vs Premium table spelling out every feature and the exact difference (e.g. alert zones 1 → 5, history 24h → full, radio audio, advanced AI). Core safety is visibly free. Clear plan choice, 7-day trial, "cancel anytime, safety never expires."</p>
-        <ul><li>Buyer sees precisely what upgrading adds</li><li>Honesty about what stays free builds trust</li><li>Informed conversion, fewer refunds/churn</li></ul>
-      </div>
-    </div>
-    <div class="cmp">
-      <h3>9 · New Premium feature: AI Deep Filter (worth paying for)</h3>
-      <div class="col before"><div class="lab">Before</div>
-        <p>Premium's headline perk is "listen to police & fire radio" — niche, and it gates basics like alert customization to drive upgrades. There's no premium feature that meaningfully reduces the app's core pain (noise & anxiety).</p>
-        <ul><li>Pays by withholding basics, not by adding value</li><li>No AI help separating signal from noise</li></ul>
-      </div>
-      <div class="col after"><div class="lab">After</div>
-        <p>A Premium <b>AI Deep Filter</b> that scores every alert by importance, credibility and relevance, merges duplicates, and strips vague single-source noise — surfacing only what matters (e.g. 47 → 6). Tunable threshold, per-rule toggles, and full transparency: it explains its reasoning, <b>never deletes</b> anything, and <b>never hides life-safety</b> alerts.</p>
-        <ul><li>A perk people will gladly pay for on a safety app</li><li>Directly attacks the noise/anxiety problem</li><li>Premium earns its price by adding value, not gating basics</li></ul>
-      </div>
-    </div>
-    <div class="cmp">
-      <h3>10 · New core: Safe Route — incident-aware routing</h3>
+      <h3>2 · Safe Route — incident-aware routing</h3>
       <div class="col before"><div class="lab">Before</div>
         <p>Citizen shows incidents on a map but does nothing with them for navigation. To avoid a dangerous block you have to eyeball the map, then plan a route yourself in a separate app.</p>
         <ul><li>Rich incident data goes unused for routing</li><li>No bridge between "what's happening" and "how I get there safely"</li></ul>
@@ -1073,18 +1057,7 @@
       </div>
     </div>
     <div class="cmp">
-      <h3>11 · Alerts: passive read → geo-gated "Go Live from here"</h3>
-      <div class="col before"><div class="lab">Before</div>
-        <p>Alerts are read-only. If you're standing right at an incident, there's no quick path from the notification to contributing footage — and nothing stops someone far away from posting misleading "coverage."</p>
-        <ul><li>No bridge from alert → on-scene contribution</li><li>Remote/fake footage is possible</li></ul>
-      </div>
-      <div class="col after"><div class="lab">After</div>
-        <p>Each alert carries a <b>Go Live from here</b> button that's <b>geo-gated</b>: only enabled when you're inside the incident's radius. Nearby alerts show a live button; far ones are disabled with the reason ("be within 0.5 mi to record").</p>
-        <ul><li>Bystanders become verified on-scene sources</li><li>Location gating blocks remote/fake footage by design</li><li>One tap from "what's happening" to "here's what I see"</li></ul>
-      </div>
-    </div>
-    <div class="cmp">
-      <h3>5 · AI: invisible → transparent + a calm summary</h3>
+      <h3>3 · AI you can see — a calm, trustworthy summary</h3>
       <div class="col before"><div class="lab">Before</div>
         <p>Where AI touches ranking or copy it's unlabelled. Users can't tell what's machine-generated, what data it used, or whether it might be wrong. Feeds are raw and alarming.</p>
         <ul><li>No disclosure → erodes trust on a safety app</li><li>"Is this about me?" takes scrolling to answer</li></ul>
