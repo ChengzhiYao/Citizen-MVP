@@ -185,7 +185,9 @@
 
   /* bottom sheet */
   .sheet{position:absolute;left:0;right:0;bottom:var(--navh);z-index:20;padding:14px 16px 14px;
+    max-height:calc(100dvh - var(--navh) - 8px);overflow-y:auto;scrollbar-width:none;
     background:linear-gradient(180deg,rgba(0,0,0,0),rgba(8,9,12,.92) 22%);}
+  .sheet::-webkit-scrollbar{display:none}
   /* Guardian launcher (collapsed): a round icon bottom-right; the full UI opens on tap */
   .gfab{position:absolute;right:16px;bottom:calc(var(--navh) + 20px);z-index:24;display:none;flex-direction:column;align-items:center;gap:7px;cursor:pointer}
   .gfab.show{display:flex}
@@ -575,7 +577,7 @@ function showPlan(){
   const mi=(S.total/1609).toFixed(1); const wmin=Math.max(1,Math.round(S.total/75));
   document.getElementById('sheet').innerHTML=`
     <div class="panel">
-      <h2>Your Guardian plan ${'<span class=\"aibadge\" style=\"vertical-align:2px\">'+ic('spark',12)+' AI</span>'}</h2>
+      <h2>Your Guardian plan ${CFG.aiSummary?('<span class=\"aibadge\" style=\"vertical-align:2px\">'+ic('spark',12)+' AI</span>'):('<span class=\"rawbadge\" style=\"vertical-align:2px\">'+ic('msg',12)+' RAW · NO AI</span>')}</h2>
       <p class="lede">Walking to ${S.destName||CFG.home||'home'} · ${mi} mi · ETA ~${wmin} min.</p>
       ${hint('planhint','This is all pre-filled from your defaults — tap any row to change it. Nothing to set up first.')}
       <div class="planline" onclick="showSafeRoute()" style="cursor:pointer"><div class="pic">${ic('nav',16)}</div><div><div class="pt">Safer route chosen<span class="tapedit">see what it avoids</span></div><div class="ps">Avoids 2 active incidents on your usual way</div></div><span class="tag">READY</span></div>
@@ -1135,7 +1137,10 @@ function filterControlsHTML(){
   const row=function(k,label,desc){return '<div class="swrow"><div style="flex:1"><div class="st">'+label+'</div><div class="ss">'+desc+'</div></div><div class="sw '+(t[k]?'on':'')+'" onclick="togType(\''+k+'\',this)"></div></div>';};
   const seg=function(field,opts){return '<div class="seg2">'+opts.map(function(o){return '<button class="'+(CFG.filters[field]===o[0]?'on':'')+'" onclick="setF(\''+field+'\',\''+o[0]+'\',this)">'+o[1]+'</button>';}).join('')+'</div>';};
   const ci=function(v,l){return '<button class="'+(CFG.checkin===v?'on':'')+'" onclick="setCI('+v+',this)">'+l+'</button>';};
-  return row('violent','Violent / weapons','Assaults, shootings, stabbings')+
+  return '<div class="sec">Emergency contacts</div>'+
+    '<div class="swrow" onclick="openContacts()" style="cursor:pointer"><div style="flex:1"><div class="st">'+(contactNames().length?contactNames().join(' · '):'None yet — tap to add')+'</div><div class="ss">Name, number &amp; relationship · texted if you miss a check-in or hit SOS, even if no one\'s watching</div></div><span style="color:#565a63;flex:0 0 auto">'+ic('chevR',16)+'</span></div>'+
+    '<div class="sec">Monitor for</div>'+
+    row('violent','Violent / weapons','Assaults, shootings, stabbings')+
     row('police','Police activity','Active police scenes')+
     row('fire','Fire / EMS','Fires, medical, hazards')+
     row('suspicious','Suspicious person / harassment','Following, harassment reports')+
@@ -1160,7 +1165,7 @@ function openFilters(){var f=document.getElementById('filtersScreen');f.classLis
   f.innerHTML='<div class="ob-top"><div class="ob-prog"></div><button class="ob-skip" onclick="closeFilters()">Done</button></div>'+
   '<div class="ob-body"><h2>Settings</h2><p class="sub">What Guardian monitors, when it interrupts you, and your check-in timer.</p>'+filterControlsHTML()+'</div>'+
   '<div class="ob-foot"><button class="btn btn-blue" onclick="closeFilters()">Save</button></div>';}
-function closeFilters(){saveCfg();document.getElementById('filtersScreen').classList.remove('show');}
+function closeFilters(){saveCfg();document.getElementById('filtersScreen').classList.remove('show');if(S.phase==='plan')showPlan();}
 
 /* check-in during a walk */
 let ciTimer=null, ciLeft=0;
