@@ -676,7 +676,7 @@ function startWalk(){
   document.getElementById('clock').classList.add('sim');
   activeSheet();
   S.note='Walk started — heading to '+(S.destName||'home')+'.';
-  if(sb){ subscribeIncidents(); publishRoute(); publishSession(); logEvent('start', S.note); }
+  if(sb){ subscribeIncidents(); publishSession(); publishRoute(); logEvent('start', S.note); }
   S.timer=setInterval(tick,600);
 }
 function tick(){
@@ -852,7 +852,7 @@ async function publishSession(){
   }catch(e){}
 }
 function setNote(t){ S.note=t; publishSession(); }
-async function publishRoute(){ if(!sb) return; try{ await sb.from('walk_sessions').update({route:S.route}).eq('code',sessCode()); }catch(e){} }
+async function publishRoute(){ if(!sb) return; try{ await sb.from('walk_sessions').upsert({code:sessCode(),route:S.route},{onConflict:'code'}); }catch(e){} }
 async function logEvent(kind,text){ if(!sb) return; try{ await sb.from('walk_events').insert({code:sessCode(),kind:kind,text:text}); }catch(e){} }
 function subscribeIncidents(){
   if(!sb) return;

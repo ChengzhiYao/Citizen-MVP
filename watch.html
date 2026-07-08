@@ -30,6 +30,7 @@
   .btn:disabled{opacity:.5}
   .note{color:#7c818b;font-size:11.5px;line-height:1.5;margin:10px 2px 0;text-align:center}
   .meMk{width:20px;height:20px;border-radius:50%;background:#2f6bff;border:3px solid #fff;box-shadow:0 0 0 7px rgba(47,107,255,.25)}
+  .incMk{width:28px;height:28px;border-radius:50%;background:#1d0f0c;border:2px solid #ff453a;display:flex;align-items:center;justify-content:center;color:#ff8078;font-weight:800;font-size:15px;box-shadow:0 0 0 8px rgba(255,69,58,.16)}
   .ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.14em}
   .wnote{background:#241803;border:1px solid #5c4310;color:#ffcf80;border-radius:12px;padding:10px 12px;font-size:12.5px;line-height:1.4;margin-bottom:12px}
   .wnote.ok{background:#0d2016;border-color:#1f5234;color:#7fe6a8}
@@ -97,7 +98,12 @@ const sb=window.supabase.createClient(SUPA_URL,SUPA_ANON);
 let map=L.map('map',{zoomControl:false,attributionControl:false}).setView([40.7305,-73.7920],16);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:20}).addTo(map);
 function closeIntro(){ const i=document.getElementById('intro'); if(i) i.style.display='none'; joinAsWatcher(); }
-let marker=null, last=null, routeLine=null, routeKey='';
+let marker=null, last=null, routeLine=null, routeKey='', incMarker=null;
+function drawIncident(lat,lng){
+  if(incMarker) map.removeLayer(incMarker);
+  incMarker=L.marker([lat,lng],{icon:L.divIcon({html:'<div class="incMk">!</div>',className:'',iconSize:[28,28],iconAnchor:[14,14]}),zIndexOffset:1000}).addTo(map);
+  map.panTo([lat,lng],{animate:true});
+}
 function drawRoute(route){
   if(!route || !Array.isArray(route) || !route.length) return;
   const first=route[0], lastp=route[route.length-1];
@@ -176,8 +182,9 @@ setInterval(load,4000); // fallback poll
 async function inject(){
   const btn=document.getElementById('inject');
   btn.disabled=true; btn.textContent='Injecting…';
-  const lat = last?last.lat:40.7305, lng = last?last.lng:-73.7920;
+  const lat = (last?last.lat:40.7305)+0.0004, lng = (last?last.lng:-73.7920)+0.0002; // a bit ahead on her path
   await sb.from('incidents').insert({type:'Police activity',severity:'high',credibility:'confirmed',street:'44th Dr',confirmations:6,lat,lng});
+  drawIncident(lat,lng);
   setTimeout(()=>{ btn.innerHTML='✓ Incident sent to Jess'; },300);
   setTimeout(()=>{ btn.disabled=false; btn.textContent='Inject another'; },3000);
 }
