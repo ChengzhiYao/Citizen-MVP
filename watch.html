@@ -16,6 +16,7 @@
   .live{display:inline-flex;align-items:center;gap:6px;background:rgba(18,20,26,.85);border:1px solid #2a2d36;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:600}
   .live .d{width:8px;height:8px;border-radius:50%;background:#30d158;animation:p 1.4s infinite}
   .live.off .d{background:#5f636c;animation:none}
+  .live.waiting .d{background:#e0a52a}
   @keyframes p{0%,100%{opacity:1}50%{opacity:.3}}
   .sheet{position:absolute;left:0;right:0;bottom:0;z-index:20;padding:14px 16px calc(16px + env(safe-area-inset-bottom));
     background:linear-gradient(180deg,transparent,rgba(8,9,12,.92) 22%)}
@@ -117,6 +118,13 @@ async function joinAsWatcher(){
   }catch(e){}
 }
 
+function setLive(state){
+  var el=document.getElementById('live'), t=document.getElementById('liveT');
+  if(!el||!t) return;
+  if(state==='live'){ el.className='live'; t.textContent='Live'; }
+  else if(state==='waiting'){ el.className='live waiting'; t.textContent='Connected · waiting for Jess'; }
+  else { el.className='live off'; t.textContent='Connecting…'; }
+}
 function render(s){
   if(!s || s.lat==null) return;
   last=s;
@@ -124,8 +132,7 @@ function render(s){
   if(!marker){ marker=L.marker(ll,{icon:L.divIcon({html:'<div class=meMk></div>',className:'',iconSize:[20,20],iconAnchor:[10,10]})}).addTo(map); map.setView(ll,16); }
   else marker.setLatLng(ll);
   map.panTo(ll,{animate:true,duration:.5});
-  document.getElementById('live').className='live';
-  document.getElementById('liveT').textContent='Live';
+  setLive('live');
   document.getElementById('inject').disabled = (s.status!=='active');
   const arrived = s.status==='arrived';
   document.getElementById('wdot').style.background = arrived ? '#30d158' : '#2f6bff';
@@ -154,8 +161,11 @@ sb.channel('watch-events').on('postgres_changes',
 loadEvents(); setInterval(loadEvents,6000);
 
 async function load(){
-  const {data}=await sb.from('walk_sessions').select('*').eq('code',CODE).maybeSingle();
-  if(data) render(data);
+  try{
+    const {data}=await sb.from('walk_sessions').select('*').eq('code',CODE).maybeSingle();
+    if(data && data.lat!=null) render(data);
+    else if(!last) setLive('waiting'); // reached Supabase — just no active walk under this code yet
+  }catch(e){ if(!last) setLive('connecting'); }
 }
 sb.channel('watch').on('postgres_changes',
   {event:'*',schema:'public',table:'walk_sessions',filter:'code=eq.'+CODE},
