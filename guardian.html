@@ -104,6 +104,13 @@
   .sw.on{background:#30d158}
   .sw.on::after{left:21px}
   .infobox{background:#0f1622;border:1px solid #1d3050;border-radius:12px;padding:12px 13px;font-size:12.5px;color:#cfe0ff;line-height:1.5;margin-top:6px}
+  .sec .optional{font-size:9px;font-weight:700;color:#8b9098;background:#191b22;border:1px solid #2a2d35;padding:2px 7px;border-radius:999px;letter-spacing:.02em;text-transform:none;margin-left:7px;vertical-align:1px}
+  .cList{margin:2px 0 4px}
+  .cItem{display:flex;align-items:center;gap:10px;padding:11px 12px;background:#101117;border:1px solid #23262e;border-radius:12px;margin-bottom:8px}
+  .cName{font-weight:600;font-size:14px;color:#f3f4f7}
+  .cRel{font-weight:500;font-size:10px;color:#8b9098;background:#191b22;border:1px solid #2a2d35;padding:1px 6px;border-radius:6px;margin-left:5px}
+  .cPhone{font-size:12px;color:#969aa3;margin-top:2px}
+  .cDel{background:none;border:none;color:#ff6a5e;cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;flex:0 0 auto}
   .sec{font-size:11.5px;color:#7c818b;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin:16px 2px 8px}
   #checkin{position:absolute;top:calc(70px + env(safe-area-inset-top));left:16px;right:16px;z-index:55;display:none}
   #checkin.show{display:block;animation:up .3s ease}
@@ -143,8 +150,11 @@
   .rawblk{background:#0c0d12;border:1px solid #23262e;border-radius:11px;padding:10px 12px;margin:11px 0 0}
   .rawhd{font-size:10px;font-weight:700;color:#8b9098;text-transform:uppercase;letter-spacing:.05em;display:flex;align-items:center;gap:6px;margin-bottom:7px}
   .rawhd .ic{font-size:12px}
-  .rawitem{font-size:12.5px;color:#c4c8d0;line-height:1.45;padding:6px 0;border-bottom:1px solid #191b21}
+  .rawitem{padding:8px 0;border-bottom:1px solid #191b21}
   .rawitem:last-of-type{border-bottom:none}
+  .rawitem .rawsrc{display:inline-flex;align-items:center;gap:5px;font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+  .rawitem .rawsrc .ic{font-size:11px}
+  .rawitem .rawtext{font-size:12.5px;color:#c4c8d0;line-height:1.45;margin-top:3px}
   .rawnote{font-size:11px;color:#7c818b;font-style:italic;margin-top:8px;line-height:1.45}
   .sharebox{display:flex;align-items:center;gap:8px;background:#101117;border:1px solid #2a2d35;border-radius:12px;padding:10px 8px 10px 13px;margin-top:4px}
   .sharebox .url{flex:1;font-size:12.5px;color:#8fb4ff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:monospace}
@@ -556,10 +566,12 @@ function collapseGuardian(){
 function showPlan(){
   S.phase='plan';
   ensureRoute();
-  const names=CFG.contacts.length?CFG.contacts.join(' · '):'no one yet — add contacts';
+  if(!S.code) S.code=Math.random().toString(36).slice(2,7).toUpperCase();
+  if(!S.watchers) S.watchers=[];
+  const url=location.origin+'/watch.html?s='+S.code;
+  const names=contactNames().length?contactNames().join(' · '):'no one yet — add contacts';
   const nTypes=Object.keys(CFG.filters.types).filter(function(k){return CFG.filters.types[k];}).length;
   const thL={serious:'only serious ones on your path',medium:'medium & up',all:'everything nearby'}[CFG.filters.threshold];
-  const ciL=CFG.checkin?(' · check-in every '+CFG.checkin+' min'):'';
   const mi=(S.total/1609).toFixed(1); const wmin=Math.max(1,Math.round(S.total/75));
   document.getElementById('sheet').innerHTML=`
     <div class="panel">
@@ -568,12 +580,20 @@ function showPlan(){
       ${hint('planhint','This is all pre-filled from your defaults — tap any row to change it. Nothing to set up first.')}
       <div class="planline" onclick="showSafeRoute()" style="cursor:pointer"><div class="pic">${ic('nav',16)}</div><div><div class="pt">Safer route chosen<span class="tapedit">see what it avoids</span></div><div class="ps">Avoids 2 active incidents on your usual way</div></div><span class="tag">READY</span></div>
       <div class="planline" onclick="openFilters()" style="cursor:pointer"><div class="pic">${ic('spark',16)}</div><div><div class="pt">Monitoring ${nTypes} incident types<span class="tapedit">tap to edit</span></div><div class="ps">Interrupts you for ${thL}</div></div><span class="tag">LIVE</span></div>
-      <div class="planline" onclick="openContacts()" style="cursor:pointer"><div class="pic">${ic('users',16)}</div><div><div class="pt">Sharing with ${names}<span class="tapedit">tap to edit</span></div><div class="ps">Live location + ETA${ciL}</div></div><span class="tag">ON</span></div>
-      <div style="height:12px"></div>
-      <button class="btn btn-blue" onclick="showShare()">${ic('share',18)} Invite people to watch</button>
+      <div class="planline" onclick="openContacts()" style="cursor:pointer"><div class="pic">${ic('users',16)}</div><div><div class="pt">Emergency contacts: ${names}<span class="tapedit">tap to edit</span></div><div class="ps">Texted if you miss a check-in${CFG.checkin?(' (every '+CFG.checkin+' min)'):''} or hit SOS — even if no one's watching</div></div><span class="tag">ON</span></div>
+
+      <div class="sec">Invite people to watch <span class="optional">optional</span></div>
+      <p class="lede" style="font-size:12.5px;margin:0 0 9px">Share this link if you want someone to follow your live location & route. You can start without it.</p>
+      <div class="sharebox"><span class="url" id="shareUrl">${url}</span><button class="btn-mini" onclick="copyShare()">${ic('checkc',13)} Copy</button></div>
+      <button class="btn btn-ghost" style="margin-top:9px" onclick="shareLink()">${ic('share',16)} Share link…</button>
+      <div class="watcherList" id="watcherList" style="margin-top:11px"></div>
+
+      <div style="height:14px"></div>
+      <button class="btn btn-blue" onclick="startWalk()">${ic('shield',18)} Continue</button>
       <div style="height:8px"></div>
       <button class="btn btn-ghost" onclick="renderIdle()">Back</button>
     </div>`;
+  renderWatchers(); loadWatchers(); subscribeWatchers();
 }
 function activeSheet(){
   const remaining=haversine(S.pos,S.dest);
@@ -603,7 +623,7 @@ function arrivedSheet(){
   document.getElementById('sheet').innerHTML=`
     <div class="panel">
       <div class="statusbar"><span class="sdot green"></span><div><div class="st">You made it home</div><div class="ss">Arrived ${fmtClock(S.simMin)} · Guardian ended</div></div></div>
-      <p class="lede" style="margin:2px 0 12px">${(CFG.contacts.slice(0,2).join(' and ')||'Your contacts')} were notified that you arrived safely. ${S.avoided?('Guardian rerouted you around '+S.avoided+' flagged location'+(S.avoided>1?'s':'')+' on the way.'):''}</p>
+      <p class="lede" style="margin:2px 0 12px">${safetyNetNames()} ${((S.watchers&&S.watchers.length)||CFG.contacts.length)>1?'were':'was'} notified that you arrived safely. ${S.avoided?('Guardian rerouted you around '+S.avoided+' flagged location'+(S.avoided>1?'s':'')+' on the way.'):''}</p>
       <button class="btn btn-blue" onclick="resetDemo()">${ic('refresh',16)} Run the demo again</button>
     </div>`;
 }
@@ -615,18 +635,29 @@ function startWalk(){
     {tick:7, sev:'high', icon:'alert', kind:'Incident ahead on your route', headline:'Reported assault ahead',
       detail:'A disturbance was just reported on the block ahead, confirmed by 6 people — directly on your path.',
       why:'Violent + confirmed + on your path', off:[0.00016,0.00016], type:'assault',
-      reports:['omg someone just got jumped by the corner, two guys ran off','cop cars flying in with sirens right now','heard shouting then everyone scattered, someone on the ground?','another says it\'s calming down, police have it','scanner: units responding, assault in progress, one down'],
+      reports:[
+        {src:'scanner', text:'Units responding — assault in progress, one person down at the corner.'},
+        {src:'video', text:'Live video near the deli — people scattering, sirens audible.', meta:'0:47 · 210 watching'},
+        {src:'user', text:'omg someone just got jumped by the corner, two guys ran off'},
+        {src:'witness', text:'heard shouting then everyone scattered, someone on the ground?'},
+        {src:'user', text:'another says it\'s calming down, police have it'}
+      ],
       ai:{headline:'Assault at the corner — police on scene, now de-escalating',
-        summary:'5 reports + scanner describe an assault at the corner; two people fled and one person was down. Police have arrived.',
-        note:'Reports disagree on whether it\'s over — one says it\'s calming down. Treating as active until police clear it.',
-        severity:'High', credibility:'Confirmed · police + scanner', relevance:'On your path'}},
+        summary:'A police scanner, a live video and several user reports all point to an assault at the corner — two people fled, one was down; police are on scene.',
+        note:'Sources disagree on whether it\'s over — one user says it\'s calming down. Treating as active until police clear it.',
+        severity:'High', credibility:'Confirmed · scanner + video', relevance:'On your path'}},
     {tick:20, sev:'med', icon:'users', kind:'Suspicious person ahead', headline:'Someone flagged on your route',
       detail:'2 people reported a person following pedestrians on the block ahead, minutes ago.',
       why:'Matches "suspicious person / harassment" in your filters', off:[-0.00016,0.00014], type:'suspicious person',
-      reports:['creepy guy been circling the block for like 10 min following women','same dude asked me weird stuff, wouldn\'t leave me alone','he\'s pacing near the deli, dark hoodie','idk might be nothing but felt off'],
+      reports:[
+        {src:'user', text:'creepy guy been circling the block for like 10 min following women'},
+        {src:'user', text:'same dude asked me weird stuff, wouldn\'t leave me alone'},
+        {src:'witness', text:'he\'s pacing near the deli, dark hoodie'},
+        {src:'user', text:'idk might be nothing but felt off'}
+      ],
       ai:{headline:'One man following pedestrians near the deli',
-        summary:'4 reports describe the same man circling the block ~10 min and approaching women near the deli, dark hoodie.',
-        note:'No police or official source — consistent across users but unconfirmed. Flagged as caution, not a proven threat.',
+        summary:'Four user reports describe the same man circling the block ~10 min and approaching women near the deli, dark hoodie.',
+        note:'No scanner, video or official source — consistent across users but unconfirmed. Flagged as caution, not a proven threat.',
         severity:'Medium', credibility:'Unconfirmed · user reports only', relevance:'On your path'}}
   ];
   if(CFG.filters.types.registry) S.events.push({tick:32, sev:'reg', icon:'home', kind:'Registered address ahead',
@@ -679,6 +710,13 @@ function fireEvent(ev){
     kind:ev.kind, headline:ev.headline, detail:ev.detail, why:ev.why, street:'the block ahead',
     reports:ev.reports, type:ev.type, ai:ev.ai});
 }
+function rawSrc(s){ return ({
+  scanner:{ic:'bell',lbl:'SCANNER',c:'#9db2d6'},
+  video:{ic:'video',lbl:'LIVE VIDEO',c:'#e08a8a'},
+  dispatch:{ic:'car',lbl:'DISPATCH',c:'#9db2d6'},
+  witness:{ic:'eye',lbl:'WITNESS',c:'#b6a06a'},
+  user:{ic:'msg',lbl:'USER REPORT',c:'#8b9098'}
+})[s]||{ic:'msg',lbl:'REPORT',c:'#8b9098'}; }
 function triggerIntervention(inc){
   if(S.phase==='intervene') return;
   inc = inc || S.scriptInc;
@@ -697,15 +735,15 @@ function triggerIntervention(inc){
   // Header badge reflects whether AI is doing the reading, or you are.
   const headBadge = aiOn
     ? '<span class="aibadge">'+ic('spark',12)+' GUARDIAN AI</span>'
-    : (hasReports ? '<span class="rawbadge">'+ic('msg',12)+' '+inc.reports.length+' RAW REPORTS</span>' : '');
-  // Body: AI condenses the reports, OR (AI off) you get the raw feed to sift yourself.
+    : (hasReports ? '<span class="rawbadge">'+ic('msg',12)+' '+inc.reports.length+' RAW SIGNALS</span>' : '');
+  // Body: AI condenses the raw signals, OR (AI off) you get the mixed raw feed to sift yourself.
   let block='';
   if(aiOn){
-    block='<div class="aiblk" id="aiblk"><span class="aibadge">'+ic('spark',12)+' AI READING '+inc.reports.length+' REPORTS…</span><div class="aitxt" id="aitxt">Condensing the raw reports into what matters…</div></div>';
+    block='<div class="aiblk" id="aiblk"><span class="aibadge">'+ic('spark',12)+' AI READING '+inc.reports.length+' SIGNALS…</span><div class="aitxt" id="aitxt">Condensing scanner, video &amp; reports into what matters…</div></div>';
   } else if(hasReports){
-    block='<div class="rawblk"><div class="rawhd">'+ic('msg',12)+' '+inc.reports.length+' unverified reports · you read these yourself</div>'+
-      inc.reports.map(function(r){return '<div class="rawitem">“'+r+'”</div>';}).join('')+
-      '<div class="rawnote">AI summaries are off — Guardian isn\'t condensing, classifying, or de-duping these for you.</div></div>';
+    block='<div class="rawblk"><div class="rawhd">'+ic('msg',12)+' '+inc.reports.length+' raw signals · scanner, video &amp; reports · you read them yourself</div>'+
+      inc.reports.map(function(r){ if(typeof r==='string'){ r={src:'user',text:r}; } var m=rawSrc(r.src); var q=(r.src==='user'||r.src==='witness'); return '<div class="rawitem"><span class="rawsrc" style="color:'+m.c+'">'+ic(m.ic,11)+' '+m.lbl+(r.meta?' · '+r.meta:'')+'</span><div class="rawtext">'+(q?'“'+r.text+'”':r.text)+'</div></div>'; }).join('')+
+      '<div class="rawnote">AI summaries are off — Guardian isn\'t condensing, classifying, or de-duping these sources for you.</div></div>';
   }
   const caveat = aiOn
     ? 'AI can be wrong — trust what you see; call 911 in an emergency.'
@@ -730,7 +768,7 @@ async function aiSummarize(inc, dist){
   let j=null, live=false;
   try{
     const res=await fetch('/api/summarize',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({reports:inc.reports, distanceMeters:dist, onPath:true, type:inc.type||inc.kind||'incident'})});
+      body:JSON.stringify({reports:inc.reports.map(function(r){return (r&&r.src?('['+r.src+'] '):'')+((r&&r.text)?r.text:r);}), distanceMeters:dist, onPath:true, type:inc.type||inc.kind||'incident'})});
     j=await res.json();
     if(j && j.summary) live=true;
   }catch(e){ j=null; }
@@ -743,7 +781,7 @@ async function aiSummarize(inc, dist){
   el.innerHTML='<b>'+(j.headline||'')+'</b><br>'+j.summary+
     (j.note?'<div class="ainote">'+ic('spark',11)+' <b>AI note:</b> '+j.note+'</div>':'')+
     '<div class="aimeta">'+[j.severity,j.credibility,j.relevance].filter(Boolean).join(' · ')+'</div>'+
-    '<div class="aisrc">Condensed from '+inc.reports.length+' raw reports + scanner by AI</div>';
+    '<div class="aisrc">Condensed from '+inc.reports.length+' raw signals (scanner · video · reports) by AI</div>';
 }
 function detourFrom(pos,dest,inc){
   // via point offset from the incident, perpendicular-ish away, then to dest
@@ -826,7 +864,12 @@ function onLiveIncident(row){
     conf:row.confirmations||6, street:row.street||'the block ahead',
     kind:'Incident just reported ahead', headline:(row.type||'Police activity')+' ahead',
     detail:'Just reported on the block ahead — on your current path.', why:'reported live + on your path',
-    reports:['just posted: '+(row.type||'police activity')+' happening right now on the next block','cops showing up','people moving away from it','scanner: units en route']};
+    reports:[
+      {src:'scanner', text:'Units en route — '+(row.type||'police activity').toLowerCase()+' reported on the next block.'},
+      {src:'user', text:'just posted: '+(row.type||'police activity').toLowerCase()+' happening right now on the next block'},
+      {src:'user', text:'cops showing up'},
+      {src:'witness', text:'people moving away from it'}
+    ]};
   triggerIntervention(inc);
 }
 
@@ -998,7 +1041,7 @@ function updateWatcherUI(){
 }
 
 /* ===== config / onboarding / filters / check-in / SOS ===== */
-function cfgDefaults(){return {onboarded:false,contacts:['Mom','Alex'],home:'67-83 223rd Pl',
+function cfgDefaults(){return {onboarded:false,contacts:[{name:'Mom',phone:'(555) 010-2020',rel:'Mom'},{name:'Alex',phone:'(555) 018-7788',rel:'Friend'}],home:'67-83 223rd Pl',
   filters:{types:{violent:true,police:true,fire:true,suspicious:true,crowds:false,traffic:false,registry:false},threshold:'serious',radius:'block'},
   checkin:5, aiSummary:true};}
 let CFG=cfgDefaults();
@@ -1012,19 +1055,40 @@ function dismissHint(id,el){markSeen(id);const h=el.closest('.ghint');if(h)h.sty
 function hint(id,text){ if(seen(id))return ''; return '<div class="ghint">'+ic('spark',14)+' <span>'+text+'</span> <b onclick="dismissHint(\''+id+'\',this)">Got it</b></div>'; }
 
 /* on-demand contacts editor (opened contextually, not forced) */
-function openContacts(){var f=document.getElementById('filtersScreen');f.classList.add('show');
-  var preset=['Mom','Dad','Alex','Partner','Roommate'];
-  var chips=preset.map(function(n){return '<span class="addchip '+(CFG.contacts.indexOf(n)>=0?'sel':'')+'" onclick="toggleContact(\''+n+'\',this)">'+ic('users',14)+' '+n+'</span>';}).join('');
+function openContacts(){document.getElementById('filtersScreen').classList.add('show');renderContacts();}
+function renderContacts(){
+  var f=document.getElementById('filtersScreen');
+  var list=(CFG.contacts&&CFG.contacts.length)? CFG.contacts.map(function(c,i){
+    c=(typeof c==='string')?{name:c}:(c||{});
+    return '<div class="cItem"><div style="flex:1"><div class="cName">'+(c.name||'Unnamed')+(c.rel?' <span class="cRel">'+c.rel+'</span>':'')+'</div><div class="cPhone">'+(c.phone||'no number yet')+'</div></div><button class="cDel" onclick="delContact('+i+')">Remove</button></div>';
+  }).join('') : '<div class="wempty">No emergency contacts yet — add one below.</div>';
   f.innerHTML='<div class="ob-top"><div class="ob-prog"></div><button class="ob-skip" onclick="closeContacts()">Done</button></div>'+
-    '<div class="ob-body"><h2>Who looks out for you</h2><p class="sub">They see your live location + ETA during a walk, and are alerted if you miss a check-in, go off route, or hit SOS.</p><div>'+chips+'</div>'+
-    '<div class="infobox">They only see your location while a walk is active.</div></div>'+
+    '<div class="ob-body"><h2>Emergency contacts</h2>'+
+    '<p class="sub">They\'re texted automatically if you miss a check-in, go off route, or hit SOS — <b>even if they\'re not watching live</b>. Watching live is optional.</p>'+
+    '<div class="cList">'+list+'</div>'+
+    '<div class="sec">Add a contact</div>'+
+    '<input class="field" id="cName" placeholder="Name (e.g. Mom)">'+
+    '<input class="field" id="cPhone" placeholder="Phone number" inputmode="tel">'+
+    '<input class="field" id="cRel" placeholder="Relationship — optional (e.g. Mother)">'+
+    '<button class="btn btn-ghost" onclick="addContact()">'+ic('users',16)+' Add contact</button>'+
+    '<div class="infobox" style="margin-top:12px">A number is only used to text them during an active walk if something\'s wrong. Nothing is shared otherwise.</div></div>'+
     '<div class="ob-foot"><button class="btn btn-blue" onclick="closeContacts()">Save</button></div>';}
+function addContact(){
+  var n=(document.getElementById('cName').value||'').trim();
+  var p=(document.getElementById('cPhone').value||'').trim();
+  var r=(document.getElementById('cRel').value||'').trim();
+  if(!n){ toast('Add a name'); return; }
+  if(!p){ toast('Add a phone number'); return; }
+  CFG.contacts=CFG.contacts||[]; CFG.contacts.push({name:n,phone:p,rel:r}); saveCfg(); renderContacts();
+  toast(n+' added to your emergency contacts');
+}
+function delContact(i){ CFG.contacts.splice(i,1); saveCfg(); renderContacts(); }
 function closeContacts(){saveCfg();document.getElementById('filtersScreen').classList.remove('show');if(S.phase==='plan')showPlan();}
 
 const OB_STEPS=5;
 function startOnboard(){document.getElementById('onboard').classList.add('show');renderOnboard(1);}
 function closeOnboard(){CFG.onboarded=true;saveCfg();document.getElementById('onboard').classList.remove('show');}
-function skipOnboard(){if(CFG.contacts.length===0)CFG.contacts=['Mom','Alex'];closeOnboard();toast('Set up with defaults — change anytime in Settings');}
+function skipOnboard(){if(!CFG.contacts||!CFG.contacts.length)CFG.contacts=cfgDefaults().contacts;closeOnboard();toast('Set up with defaults — change anytime in Settings');}
 function renderOnboard(step){
   const prog=Array.from({length:OB_STEPS},function(_,i){return '<i class="'+(i<step?'on':'')+'"></i>';}).join('');
   let body='',foot='';
@@ -1033,12 +1097,11 @@ function renderOnboard(step){
       '<p class="sub">One tap watches your whole walk — it picks the safest route, shares your live location with people you trust, and warns you about incidents on your path before they reach you. Let\'s set it up (takes a minute).</p>';
     foot='<button class="btn btn-blue" onclick="renderOnboard(2)">Get started</button>';
   } else if(step===2){
-    const preset=['Mom','Dad','Alex','Partner','Roommate'];
-    const chips=preset.map(function(n){return '<span class="addchip '+(CFG.contacts.indexOf(n)>=0?'sel':'')+'" onclick="toggleContact(\''+n+'\',this)">'+ic('users',14)+' '+n+'</span>';}).join('');
+    const cn=contactNames();
     body='<div class="ob-hero">'+ic('users',26)+'</div><h2>Who should look out for you?</h2>'+
-      '<p class="sub">Your Safety Network sees your live location and ETA while you walk, and is alerted automatically if you stop, go off route, miss a check-in, or hit SOS. Add a few people — they get a text with a link.</p>'+
-      '<div>'+chips+'</div>'+
-      '<div class="infobox">Add or remove anyone anytime. They only see your location while a walk is active.</div>';
+      '<p class="sub">Add <b>emergency contacts</b> — they\'re texted automatically if you miss a check-in, go off route, or hit SOS, <b>even if they\'re not watching live</b>. Live watching is always optional.</p>'+
+      '<button class="btn btn-ghost" onclick="openContacts()">'+ic('users',16)+' Add / edit emergency contacts</button>'+
+      '<div class="infobox" style="margin-top:12px">'+(cn.length?('Current: '+cn.join(', ')+'.'):'None yet.')+' Name, number &amp; relationship (optional) — change anytime in Settings.</div>';
     foot='<button class="btn btn-blue" onclick="renderOnboard(3)">Next</button>';
   } else if(step===3){
     body='<div class="ob-hero">'+ic('home',26)+'</div><h2>Where\'s home?</h2>'+
@@ -1106,12 +1169,19 @@ function showCheckin(){ ciLeft=12; const el=document.getElementById('checkin'); 
   const paint=function(){ el.innerHTML='<div style="background:#14110a;border:1px solid #5c4310;border-radius:16px;padding:14px 15px;box-shadow:0 14px 34px rgba(0,0,0,.5)">'+
     '<div style="display:flex;align-items:center;gap:8px;color:#ffcf80;font-size:12px;font-weight:700"><span style="width:9px;height:9px;border-radius:50%;background:#e0a52a;display:inline-block"></span> SAFETY CHECK-IN</div>'+
     '<div style="font-size:15px;font-weight:700;margin:7px 0 3px">Still doing OK?</div>'+
-    '<div style="font-size:12.5px;color:#c9bfa0;line-height:1.4">Tap to confirm. No response in <b>'+ciLeft+'s</b> and I\'ll alert '+(CFG.contacts.slice(0,2).join(' &amp; ')||'your contacts')+' with your location + nearby risk.</div>'+
+    '<div style="font-size:12.5px;color:#c9bfa0;line-height:1.4">Tap to confirm. No response in <b>'+ciLeft+'s</b> and I\'ll alert '+(contactNames().slice(0,2).join(' &amp; ')||'your contacts')+' with your location + nearby risk.</div>'+
     '<button class="btn btn-blue" style="margin-top:11px" onclick="checkinOK()">'+ic('checkc',16)+' I\'m OK</button></div>'; };
   paint(); clearInterval(ciTimer);
   ciTimer=setInterval(function(){ ciLeft--; if(ciLeft<=0){clearInterval(ciTimer);checkinMissed();} else paint(); },800);
 }
-function checkinOK(){clearInterval(ciTimer);document.getElementById('checkin').classList.remove('show');toast('Checked in — '+(CFG.contacts.slice(0,2).join(' & ')||'your contacts')+' notified you\'re safe');}
+function contactNames(){ return (CFG.contacts||[]).map(function(c){ return (typeof c==='string')?c:(c&&c.name); }).filter(Boolean); }
+function safetyNetNames(){
+  // prefer the people actually watching live; fall back to saved emergency contacts
+  var w=(S.watchers&&S.watchers.length)?S.watchers.slice(0,3):[];
+  if(w.length) return w.join(' & ');
+  var c=contactNames(); return c.slice(0,2).join(' & ')||'your contacts';
+}
+function checkinOK(){clearInterval(ciTimer);document.getElementById('checkin').classList.remove('show');toast('Checked in — '+safetyNetNames()+' notified you\'re safe');}
 function checkinMissed(){document.getElementById('checkin').classList.remove('show');toast('No check-in — alerting your contacts with your location + nearby risk');setNote('Missed a safety check-in — contacts alerted.');logEvent('checkin','Missed a safety check-in — contacts alerted with location + nearby risk.');if(sb){try{sb.from('walk_sessions').update({status:'overdue'}).eq('code',sessCode());}catch(e){}}}
 
 /* SOS — manual only */
