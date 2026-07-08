@@ -233,7 +233,10 @@
 
   /* AI intervention card */
   .interv{position:absolute;left:16px;right:16px;bottom:calc(var(--navh) + 12px);z-index:40;background:#100d1f;border:1px solid #372e6b;
-    border-radius:22px;padding:18px;box-shadow:0 24px 60px rgba(0,0,0,.6);display:none;animation:up .3s ease;max-height:calc(100dvh - 150px);overflow-y:auto}
+    border-radius:22px;padding:18px;box-shadow:0 24px 60px rgba(0,0,0,.6);display:none;animation:up .3s ease;max-height:calc(100dvh - 150px);overflow-y:auto;scrollbar-width:none}
+  /* hide default scrollbars everywhere for a native feel */
+  .interv::-webkit-scrollbar,.scr::-webkit-scrollbar,.ob-body::-webkit-scrollbar,.panel::-webkit-scrollbar{display:none}
+  .scr,.ob-body{scrollbar-width:none}
   .interv.show{display:block}
   @keyframes up{from{transform:translateY(30px);opacity:.3}to{transform:none;opacity:1}}
   .interv .hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
@@ -935,7 +938,7 @@ function showSafeRoute(){
     '<div class="tw">'+ic('spark',11)+' Avoided because: '+t.why+'</div></div></div>';}).join('');
   const regNote=CFG.filters.types.registry?'<br><br><b>About registered addresses:</b> this uses public sex-offender registry data. A listing is <b>not evidence of current danger</b> and is not a substitute for your judgment — it\'s here only so you can set your own comfort level. Guardian shows no names or photos, and this must never be used to harass anyone.':'';
   document.getElementById('sheet').innerHTML=
-    '<div class="panel" style="max-height:64vh;overflow-y:auto">'+
+    '<div class="panel" style="max-height:64vh;overflow-y:auto;scrollbar-width:none">'+
       '<div class="statusbar"><span class="sdot amber"></span><div><div class="st">Your usual route passes '+threats.length+' flagged locations</div><div class="ss">Guardian found a safer way tonight</div></div><span class="aibadge" style="margin-left:auto">'+ic('spark',12)+' AI</span></div>'+
       '<div class="legend"><span><i style="background:#ff453a"></i> Usual · fastest</span><span><i style="background:#30d158"></i> Safer · +3 min</span></div>'+
       rows+
